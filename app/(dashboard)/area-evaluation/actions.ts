@@ -170,13 +170,15 @@ export async function submitAreaEvaluation(formData: FormData) {
       .eq("id", responsible_area_id)
       .single();
     
-    if (areaData?.homerooms?.grade_level) {
-      const className = areaData.homerooms.class_name;
-      await notifyGradeHead(
-        adminClient,
-        areaData.homerooms.grade_level,
-        "มีการประเมินพื้นที่รับผิดชอบใหม่",
-        `รอการอนุมัติ: ประเมินพื้นที่รับผิดชอบของห้อง ${className}`,
+    if (areaData?.homerooms) {
+      const homeroom = Array.isArray(areaData.homerooms) ? areaData.homerooms[0] : areaData.homerooms;
+      if (homeroom?.grade_level) {
+        const className = homeroom.class_name;
+        await notifyGradeHead(
+          adminClient,
+          homeroom.grade_level,
+          "มีการประเมินพื้นที่รับผิดชอบใหม่",
+          `รอการอนุมัติ: ประเมินพื้นที่รับผิดชอบของห้อง ${className}`,
         "area_evaluation",
         evalData.id,
         "/area-evaluation/approvals"
