@@ -588,7 +588,7 @@ export function DashboardContent({
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" vertical={false} />
               <XAxis dataKey="name" tick={{ fontSize: 12, fontFamily: "Sarabun" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ borderRadius: "12px", fontFamily: "Sarabun", fontSize: 13, border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
+              <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: "12px", fontFamily: "Sarabun", fontSize: 13, border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)", background: "var(--background)", color: "var(--foreground)" }} />
               <Legend wrapperStyle={{ fontFamily: "Sarabun", fontSize: 12, paddingTop: "10px" }} />
               <Bar dataKey="ทอง" fill="#F59E0B" radius={[4,4,0,0]} />
               <Bar dataKey="เงิน" fill="#94A3B8" radius={[4,4,0,0]} />
