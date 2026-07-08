@@ -124,14 +124,8 @@ export function ReportsView({ homerooms, classroomEvals, areaEvals, waterEvals, 
           <span className="text-sm font-medium text-gray-600 dark:text-gray-300">กรองข้อมูล</span>
         </div>
         <select className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
-          <option>ภาคเรียนที่ 1/2567</option>
-          <option>ภาคเรียนที่ 2/2566</option>
-        </select>
-        <select className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
-          <option>ทุกอาคาร</option>
-          <option>อาคาร 1</option>
-          <option>อาคาร 2</option>
-          <option>อาคาร 3</option>
+          <option>ภาคเรียนที่ 1/2569</option>
+          <option>ภาคเรียนที่ 2/2569</option>
         </select>
         <div className="flex items-center gap-2 ml-auto">
           <Calendar className="w-4 h-4 text-gray-400" />
@@ -146,7 +140,7 @@ export function ReportsView({ homerooms, classroomEvals, areaEvals, waterEvals, 
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="font-semibold text-gray-900 dark:text-white">ผลการประเมินรายสัปดาห์</h2>
-            <p className="text-xs text-gray-400 mt-0.5">ภาคเรียนที่ 1/2567</p>
+            <p className="text-xs text-gray-400 mt-0.5">ภาพรวมตามภาคเรียน</p>
           </div>
           <button className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
             <Download className="w-3.5 h-3.5" />
@@ -159,8 +153,11 @@ export function ReportsView({ homerooms, classroomEvals, areaEvals, waterEvals, 
             <XAxis dataKey="week" tick={{ fontSize: 12, fontFamily: "Sarabun" }} />
             <YAxis domain={[60, 100]} tick={{ fontSize: 12 }} />
             <Tooltip
-              contentStyle={{ borderRadius: "12px", fontFamily: "Sarabun", fontSize: 13 }}
-              formatter={(v) => [`${Number(v)}%`]}
+              cursor={{ fill: 'transparent' }}
+              contentStyle={{ borderRadius: "12px", fontFamily: "Sarabun", fontSize: 13, border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)", backgroundColor: "rgba(255, 255, 255, 0.95)", color: "#111827" }}
+              itemStyle={{ color: "#374151" }}
+              labelStyle={{ color: "#111827", fontWeight: "bold" }}
+              formatter={(v: any) => [`${Number(v)}%`]}
             />
             <Legend wrapperStyle={{ fontFamily: "Sarabun", fontSize: 12 }} />
             <Bar dataKey="area" name="พื้นที่รับผิดชอบ" fill="#16a34a" radius={[4, 4, 0, 0]} />
