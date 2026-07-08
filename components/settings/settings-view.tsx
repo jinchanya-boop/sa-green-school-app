@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Settings, Building2, Users, GraduationCap, FileText, Bell, Shield } from "lucide-react";
+import { Settings, Building2, Users, GraduationCap, FileText, Bell, Shield, Calendar } from "lucide-react";
 import { useState } from "react";
 import { AcademicTab } from "./academic-tab";
 import { BuildingsTab } from "./buildings-tab";
@@ -9,6 +9,7 @@ import { CriteriaTab } from "./criteria-tab";
 import { UsersTab } from "./users-tab";
 import { AreasTab } from "./areas-tab";
 import { HomeroomsTab } from "./homerooms-tab";
+import { RoundsTab } from "./rounds-tab";
 
 const TABS = [
   { id: "general", label: "ทั่วไป", icon: Settings },
@@ -16,6 +17,7 @@ const TABS = [
   { id: "homerooms", label: "ห้องประจำชั้น", icon: Users },
   { id: "users", label: "ผู้ใช้งาน", icon: Users },
   { id: "academic", label: "ปีการศึกษา", icon: GraduationCap },
+  { id: "rounds", label: "รอบประเมิน", icon: Calendar },
   { id: "areas", label: "พื้นที่รับผิดชอบ", icon: Building2 },
   { id: "criteria", label: "เกณฑ์ประเมิน", icon: FileText },
   { id: "notifications", label: "การแจ้งเตือน", icon: Bell },
@@ -207,7 +209,28 @@ export function SettingsView({ data }: { data: any }) {
             <HomeroomsTab data={data} />
           )}
 
-          {activeTab !== "general" && activeTab !== "academic" && activeTab !== "buildings" && activeTab !== "homerooms" && activeTab !== "criteria" && activeTab !== "users" && activeTab !== "areas" && (
+          {activeTab === "audit" && (
+            <div className="stat-card bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 flex items-center justify-center py-20 text-gray-500 flex-col gap-2">
+              <Shield className="w-8 h-8 opacity-50" />
+              <p>บันทึกระบบอยู่ระหว่างการพัฒนา</p>
+            </div>
+          )}
+
+          {activeTab === "rounds" && (() => {
+            const getSetting = (key: string, def: any) => {
+              const s = data.settings?.find((x: any) => x.key === key);
+              if (!s) return def;
+              try {
+                return JSON.parse(s.value);
+              } catch (e) {
+                return s.value;
+              }
+            };
+            const rounds = getSetting("evaluation_rounds", []);
+            return <RoundsTab initialRounds={rounds} />;
+          })()}
+
+          {activeTab !== "general" && activeTab !== "academic" && activeTab !== "buildings" && activeTab !== "homerooms" && activeTab !== "criteria" && activeTab !== "users" && activeTab !== "areas" && activeTab !== "rounds" && activeTab !== "audit" && (
             <div className="stat-card flex flex-col items-center justify-center py-20 text-gray-400">
               <Settings className="w-12 h-12 mb-3 opacity-20" />
               <p className="font-medium">

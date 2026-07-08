@@ -28,6 +28,19 @@ export async function updateGeneralSettings(formData: FormData) {
   return { success: true };
 }
 
+export async function updateEvaluationRounds(rounds: any[]) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("system_settings").upsert({
+    key: "evaluation_rounds",
+    value: JSON.stringify(rounds),
+  });
+
+  if (error) return { success: false, error: error.message };
+  revalidatePath("/settings");
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
 // ==========================================
 // ACADEMIC YEAR ACTIONS
 // ==========================================

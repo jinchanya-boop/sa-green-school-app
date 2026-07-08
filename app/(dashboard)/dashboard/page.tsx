@@ -158,7 +158,8 @@ export default async function DashboardPage() {
   const [
     { data: todayArea },
     { data: todayClass },
-    { data: todayWater }
+    { data: todayWater },
+    roundsRes
   ] = await Promise.all([
     supabase
       .from("area_evaluations")
@@ -172,7 +173,19 @@ export default async function DashboardPage() {
       .from("water_bottle_records")
       .select("homeroom_id")
       .gte("check_date", todayStr),
+    supabase
+      .from("system_settings")
+      .select("value")
+      .eq("key", "evaluation_rounds")
+      .maybeSingle(),
   ]);
+
+  let evaluationRounds = [];
+  try {
+    if (roundsRes?.data?.value) {
+      evaluationRounds = JSON.parse(roundsRes.data.value);
+    }
+  } catch (e) {}
 
   return (
     <DashboardContent
@@ -188,6 +201,7 @@ export default async function DashboardPage() {
         classroom: todayClass ?? [],
         water: todayWater ?? []
       }}
+      evaluationRounds={evaluationRounds}
     />
   );
 }

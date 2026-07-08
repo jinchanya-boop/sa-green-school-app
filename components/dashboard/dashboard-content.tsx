@@ -33,7 +33,7 @@ import {
   Filter,
 } from "lucide-react";
 import { GRADE_COLORS, formatPercent } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, getWeek } from "date-fns";
 import { th } from "date-fns/locale";
 
 interface DashboardContentProps {
@@ -49,6 +49,7 @@ interface DashboardContentProps {
     classroom: any[];
     water: any[];
   };
+  evaluationRounds?: any[];
 }
 
 const containerVariants: Variants = {
@@ -90,6 +91,7 @@ export function DashboardContent({
   pendingApprovals,
   homerooms,
   todaySubmissions = { area: [], classroom: [], water: [] },
+  evaluationRounds = [],
 }: DashboardContentProps) {
   const areaGrades = countGrades(areaStats);
   const classroomGrades = countGrades(classroomStats);
@@ -180,7 +182,28 @@ export function DashboardContent({
   const progressData = useMemo(() => {
     const periods = new Set<string>();
     
-    const getWeekOfMonth = (dateStr: string) => {
+    // Fallback: If no evaluation rounds are set, use the old logic
+    const hasRounds = evaluationRounds && evaluationRounds.length > 0;
+
+    const getRound = (dateStr: string) => {
+      if (!hasRounds) return null;
+      const d = new Date(dateStr).getTime();
+      return evaluationRounds.find((r: any) => {
+        const start = new Date(r.start_date).getTime();
+        const end = new Date(r.end_date).getTime() + 86400000; // include end date
+        return d >= start && d <= end;
+      });
+    };
+
+    const getWeekOfRound = (dateStr: string, roundStart: string) => {
+      const d = new Date(dateStr);
+      const start = new Date(roundStart);
+      const weekOfD = getWeek(d, { weekStartsOn: 1 });
+      const weekOfStart = getWeek(start, { weekStartsOn: 1 });
+      return weekOfD - weekOfStart + 1;
+    };
+
+    const getFallbackWeek = (dateStr: string) => {
       const [y, m, d] = dateStr.split('-');
       const day = parseInt(d);
       if (day <= 7) return "1";
@@ -192,12 +215,23 @@ export function DashboardContent({
     const extractPeriods = (records: any[], dateField: string) => {
       records.forEach(r => { 
         if (r[dateField]) {
+          const round = getRound(r[dateField]);
+          
           if (viewMode === "monthly") {
-            periods.add(r[dateField].slice(0, 7)); // YYYY-MM
+            if (round) {
+              periods.add(`R-${round.id}`); // prefix to distinguish
+            } else {
+              periods.add(r[dateField].slice(0, 7)); // YYYY-MM
+            }
           } else {
-            const [y, m] = r[dateField].split('-');
-            const week = getWeekOfMonth(r[dateField]);
-            periods.add(`${y}-${m}-W${week}`);
+            if (round) {
+              const week = getWeekOfRound(r[dateField], round.start_date);
+              periods.add(`R-${round.id}-W${week}`);
+            } else {
+              const [y, m] = r[dateField].split('-');
+              const week = getFallbackWeek(r[dateField]);
+              periods.add(`${y}-${m}-W${week}`);
+            }
           }
         } 
       });
@@ -206,7 +240,22 @@ export function DashboardContent({
     extractPeriods(classroomStats, "evaluated_at");
     extractPeriods(waterStats, "check_date");
     
-    const sortedPeriods = Array.from(periods).sort();
+    // Sort periods
+    // For R- it sorts by round start_date implicitly if we map them, but for strings we need a custom sort
+    const sortedPeriods = Array.from(periods).sort((a, b) => {
+      // Sort logic
+      if (a.startsWith("R-") && b.startsWith("R-")) {
+        const roundA = evaluationRounds.find((r: any) => a.includes(r.id));
+        const roundB = evaluationRounds.find((r: any) => b.includes(r.id));
+        if (roundA && roundB) {
+          const timeA = new Date(roundA.start_date).getTime();
+          const timeB = new Date(roundB.start_date).getTime();
+          if (timeA !== timeB) return timeA - timeB;
+        }
+        return a.localeCompare(b);
+      }
+      return a.localeCompare(b);
+    });
     
     // Filter homerooms by grade and sort by class number
     const filteredHomerooms = homerooms
@@ -216,26 +265,50 @@ export function DashboardContent({
     // Build Chart Data
     const chartData = sortedPeriods.map(period => {
       let label = "";
-      if (viewMode === "monthly") {
-        label = new Date(period + "-01").toLocaleDateString("th-TH", { month: "short" });
+      
+      if (period.startsWith("R-")) {
+        const parts = period.split("-W");
+        const roundId = parts[0].replace("R-", "");
+        const round = evaluationRounds.find((r: any) => r.id === roundId);
+        if (viewMode === "monthly") {
+          label = round ? round.name : period;
+        } else {
+          label = round ? `${round.name} สัปดาห์ ${parts[1]}` : period;
+        }
       } else {
-        const [y, m, w] = period.split('-');
-        const monthName = new Date(`${y}-${m}-01`).toLocaleDateString("th-TH", { month: "short" });
-        label = `${monthName} สัปดาห์ ${w.replace('W', '')}`;
+        if (viewMode === "monthly") {
+          label = new Date(period + "-01").toLocaleDateString("th-TH", { month: "short" });
+        } else {
+          const [y, m, w] = period.split('-');
+          const monthName = new Date(`${y}-${m}-01`).toLocaleDateString("th-TH", { month: "short" });
+          label = `${monthName} สัปดาห์ ${w.replace('W', '')}`;
+        }
       }
       
       const dataPoint: any = { period: label };
-      const periodPrefix = viewMode === "monthly" ? period : period.substring(0, 7); // "YYYY-MM"
+      const periodPrefix = viewMode === "monthly" && !period.startsWith("R-") ? period : period.substring(0, 7);
       
       filteredHomerooms.forEach(hr => {
         let hrScore = 0;
         
         const isMatch = (dateStr: string) => {
           if (!dateStr) return false;
-          if (viewMode === "monthly") return dateStr.startsWith(periodPrefix);
-          const [y, m] = dateStr.split('-');
-          const week = getWeekOfMonth(dateStr);
-          return `${y}-${m}-W${week}` === period;
+          
+          if (period.startsWith("R-")) {
+            const parts = period.split("-W");
+            const roundId = parts[0].replace("R-", "");
+            const round = getRound(dateStr);
+            if (!round || round.id !== roundId) return false;
+            
+            if (viewMode === "monthly") return true;
+            const week = getWeekOfRound(dateStr, round.start_date);
+            return week.toString() === parts[1];
+          } else {
+            if (viewMode === "monthly") return dateStr.startsWith(periodPrefix);
+            const [y, m] = dateStr.split('-');
+            const week = getFallbackWeek(dateStr);
+            return `${y}-${m}-W${week}` === period;
+          }
         };
         
         if (selectedCategory === "area") {
