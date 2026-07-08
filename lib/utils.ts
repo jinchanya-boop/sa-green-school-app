@@ -12,7 +12,6 @@ export function calculateGrade(percentage: number): ScoreGrade {
   if (percentage >= 90) return "gold";
   if (percentage >= 80) return "silver";
   if (percentage >= 70) return "bronze";
-  if (percentage >= 60) return "pass";
   return "fail";
 }
 
@@ -21,7 +20,6 @@ export const GRADE_LABELS: Record<ScoreGrade, string> = {
   gold: "ทอง",
   silver: "เงิน",
   bronze: "ทองแดง",
-  pass: "ผ่าน",
   fail: "ไม่ผ่าน",
 };
 
@@ -30,7 +28,6 @@ export const GRADE_COLORS: Record<ScoreGrade, string> = {
   gold: "#F59E0B",
   silver: "#94A3B8",
   bronze: "#B45309",
-  pass: "#22C55E",
   fail: "#EF4444",
 };
 
@@ -41,7 +38,6 @@ export const GRADE_BG: Record<ScoreGrade, string> = {
     "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300",
   bronze:
     "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-400",
-  pass: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400",
   fail: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400",
 };
 

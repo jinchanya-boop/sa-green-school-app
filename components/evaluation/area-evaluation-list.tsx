@@ -208,7 +208,7 @@ export function AreaEvaluationList({ evaluations, areas, semesters, criteria, us
                           <td className="text-center">
                             {ev.grade ? (
                               <span className={`text-xs font-bold px-2 py-1 rounded-lg border ${GRADE_BG[ev.grade as keyof typeof GRADE_BG]}`}>
-                                {ev.grade === "gold" ? "ทอง" : ev.grade === "silver" ? "เงิน" : ev.grade === "bronze" ? "ทองแดง" : ev.grade === "pass" ? "ผ่าน" : "ไม่ผ่าน"}
+                                {ev.grade === "gold" ? "ทอง" : ev.grade === "silver" ? "เงิน" : ev.grade === "bronze" ? "ทองแดง" : "ไม่ผ่าน"}
                               </span>
                             ) : (
                               <span className="text-gray-400 text-xs">—</span>

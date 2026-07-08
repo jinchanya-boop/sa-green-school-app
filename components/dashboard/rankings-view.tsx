@@ -19,7 +19,6 @@ function getGrade(percentage: number) {
   if (percentage >= 90) return "gold";
   if (percentage >= 80) return "silver";
   if (percentage >= 70) return "bronze";
-  if (percentage >= 60) return "pass";
   return "fail";
 }
 

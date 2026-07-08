@@ -19,7 +19,7 @@ export type EvaluationStatus =
   | "rejected"
   | "acknowledged";
 
-export type ScoreGrade = "gold" | "silver" | "bronze" | "pass" | "fail";
+export type ScoreGrade = "gold" | "silver" | "bronze" | "fail";
 
 export type NotificationChannel = "in_app" | "line" | "email" | "push";
 

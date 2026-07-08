@@ -65,7 +65,7 @@ const itemVariants: Variants = {
 };
 
 function countGrades(stats: Array<{ grade: string | null }>) {
-  const counts: Record<string, number> = { gold: 0, silver: 0, bronze: 0, pass: 0, fail: 0 };
+  const counts: Record<string, number> = { gold: 0, silver: 0, bronze: 0, fail: 0 };
   stats.forEach((s) => { if (s.grade) counts[s.grade] = (counts[s.grade] ?? 0) + 1; });
   return counts;
 }
@@ -76,7 +76,7 @@ function avgPercent(stats: Array<{ percentage: number }>) {
 }
 
 const GRADE_LABEL_MAP: Record<string, string> = {
-  gold: "ทอง", silver: "เงิน", bronze: "ทองแดง", pass: "ผ่าน", fail: "ไม่ผ่าน",
+  gold: "ทอง", silver: "เงิน", bronze: "ทองแดง", fail: "ไม่ผ่าน",
 };
 
 const COLORS = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316", "#6366f1", "#84cc16"];
@@ -109,7 +109,6 @@ export function DashboardContent({
       ทอง: areaGrades.gold,
       เงิน: areaGrades.silver,
       ทองแดง: areaGrades.bronze,
-      ผ่าน: areaGrades.pass,
       ไม่ผ่าน: areaGrades.fail,
     },
     {
@@ -117,7 +116,6 @@ export function DashboardContent({
       ทอง: classroomGrades.gold,
       เงิน: classroomGrades.silver,
       ทองแดง: classroomGrades.bronze,
-      ผ่าน: classroomGrades.pass,
       ไม่ผ่าน: classroomGrades.fail,
     },
     {
@@ -125,7 +123,6 @@ export function DashboardContent({
       ทอง: waterGrades.gold,
       เงิน: waterGrades.silver,
       ทองแดง: waterGrades.bronze,
-      ผ่าน: waterGrades.pass,
       ไม่ผ่าน: waterGrades.fail,
     },
   ];
@@ -593,7 +590,6 @@ export function DashboardContent({
               <Bar dataKey="ทอง" fill="#F59E0B" radius={[4,4,0,0]} />
               <Bar dataKey="เงิน" fill="#94A3B8" radius={[4,4,0,0]} />
               <Bar dataKey="ทองแดง" fill="#B45309" radius={[4,4,0,0]} />
-              <Bar dataKey="ผ่าน" fill="#22C55E" radius={[4,4,0,0]} />
               <Bar dataKey="ไม่ผ่าน" fill="#EF4444" radius={[4,4,0,0]} />
             </BarChart>
           </ResponsiveContainer>

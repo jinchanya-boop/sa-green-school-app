@@ -247,7 +247,7 @@ export function WaterBottleDashboard({ records }: WaterBottleDashboardProps) {
                           <div>
                             <p className="font-medium text-gray-900 dark:text-white text-sm">{item.class_name}</p>
                             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${GRADE_BG[item.grade as keyof typeof GRADE_BG]}`}>
-                              {item.grade === "gold" ? "ทอง" : item.grade === "silver" ? "เงิน" : item.grade === "bronze" ? "ทองแดง" : item.grade === "pass" ? "ผ่าน" : "ไม่ผ่าน"}
+                              {item.grade === "gold" ? "ทอง" : item.grade === "silver" ? "เงิน" : item.grade === "bronze" ? "ทองแดง" : "ไม่ผ่าน"}
                             </span>
                           </div>
                         </div>

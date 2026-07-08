@@ -138,7 +138,7 @@ export function WaterBottleList({ records: initialRecords, homerooms, semesters,
                 </div>
                 <div>
                   <span className={`text-sm font-bold px-2.5 py-1 rounded-lg border ${GRADE_BG[avgGrade as keyof typeof GRADE_BG]}`}>
-                    {avgGrade === "gold" ? "ทอง" : avgGrade === "silver" ? "เงิน" : avgGrade === "bronze" ? "ทองแดง" : avgGrade === "pass" ? "ผ่าน" : "ไม่ผ่าน"}
+                    {avgGrade === "gold" ? "ทอง" : avgGrade === "silver" ? "เงิน" : avgGrade === "bronze" ? "ทองแดง" : "ไม่ผ่าน"}
                   </span>
                   <p className="text-sm text-gray-400 mt-1">ระดับรวมเฉลี่ย</p>
                 </div>
@@ -207,7 +207,7 @@ export function WaterBottleList({ records: initialRecords, homerooms, semesters,
                           <td className="text-center">
                             {r.grade ? (
                               <span className={`text-xs font-bold px-2 py-1 rounded-lg border ${GRADE_BG[r.grade as keyof typeof GRADE_BG]}`}>
-                                {r.grade === "gold" ? "ทอง" : r.grade === "silver" ? "เงิน" : r.grade === "bronze" ? "ทองแดง" : r.grade === "pass" ? "ผ่าน" : "ไม่ผ่าน"}
+                                {r.grade === "gold" ? "ทอง" : r.grade === "silver" ? "เงิน" : r.grade === "bronze" ? "ทองแดง" : "ไม่ผ่าน"}
                               </span>
                             ) : <span className="text-gray-400 text-xs">—</span>}
                           </td>
