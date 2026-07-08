@@ -167,7 +167,7 @@ export function DashboardContent({
       : comparisonCategory === "classroom" ? classroomStats : waterStats;
     
     return homerooms
-      .filter(hr => hr.grade_level?.toString() === comparisonGrade)
+      .filter(hr => comparisonGrade === "all" ? true : hr.grade_level?.toString() === comparisonGrade)
       .sort((a, b) => (a.class_number || 0) - (b.class_number || 0))
       .map(hr => {
         const records = targetStats.filter(r => r.homeroom_id === hr.id);
@@ -698,6 +698,7 @@ export function DashboardContent({
                 <option value="4">ม.4</option>
                 <option value="5">ม.5</option>
                 <option value="6">ม.6</option>
+                <option value="all">ทั้งหมด</option>
               </select>
             </div>
           </div>
@@ -708,7 +709,9 @@ export function DashboardContent({
               <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} domain={[0, 100]} />
               <Tooltip 
                 cursor={{ fill: 'transparent' }} 
-                contentStyle={{ borderRadius: "12px", fontFamily: "Sarabun", fontSize: 13, border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)", background: "var(--background)", color: "var(--foreground)" }}
+                contentStyle={{ borderRadius: "12px", fontFamily: "Sarabun", fontSize: 13, border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)", backgroundColor: "rgba(255, 255, 255, 0.95)" }}
+                itemStyle={{ color: "#374151" }}
+                labelStyle={{ color: "#111827", fontWeight: "bold" }}
                 formatter={(value: any) => [`${value}%`, 'คะแนน']} 
               />
               <Bar dataKey="score" radius={[4,4,0,0]}>
