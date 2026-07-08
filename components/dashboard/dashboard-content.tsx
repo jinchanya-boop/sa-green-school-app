@@ -178,17 +178,38 @@ export function DashboardContent({
   // --- Monthly Progress Logic ---
   const [selectedGrade, setSelectedGrade] = useState<string>("1");
   const [selectedCategory, setSelectedCategory] = useState<"area" | "classroom" | "water">("area");
+  const [viewMode, setViewMode] = useState<"monthly" | "weekly">("monthly");
 
-  const monthlyData = useMemo(() => {
-    const months = new Set<string>();
-    const extractMonths = (records: any[], dateField: string) => {
-      records.forEach(r => { if (r[dateField]) months.add(r[dateField].slice(0, 7)); });
-    };
-    extractMonths(areaStats, "evaluated_at");
-    extractMonths(classroomStats, "evaluated_at");
-    extractMonths(waterStats, "check_date");
+  const progressData = useMemo(() => {
+    const periods = new Set<string>();
     
-    const sortedMonths = Array.from(months).sort();
+    const getWeekOfMonth = (dateStr: string) => {
+      const [y, m, d] = dateStr.split('-');
+      const day = parseInt(d);
+      if (day <= 7) return "1";
+      if (day <= 14) return "2";
+      if (day <= 21) return "3";
+      return "4";
+    };
+
+    const extractPeriods = (records: any[], dateField: string) => {
+      records.forEach(r => { 
+        if (r[dateField]) {
+          if (viewMode === "monthly") {
+            periods.add(r[dateField].slice(0, 7)); // YYYY-MM
+          } else {
+            const [y, m] = r[dateField].split('-');
+            const week = getWeekOfMonth(r[dateField]);
+            periods.add(`${y}-${m}-W${week}`);
+          }
+        } 
+      });
+    };
+    extractPeriods(areaStats, "evaluated_at");
+    extractPeriods(classroomStats, "evaluated_at");
+    extractPeriods(waterStats, "check_date");
+    
+    const sortedPeriods = Array.from(periods).sort();
     
     // Filter homerooms by grade and sort by class number
     const filteredHomerooms = homerooms
@@ -196,27 +217,44 @@ export function DashboardContent({
       .sort((a, b) => (a.class_number || 0) - (b.class_number || 0));
     
     // Build Chart Data
-    const chartData = sortedMonths.map(month => {
-      const dataPoint: any = { month: new Date(month + "-01").toLocaleDateString("th-TH", { month: "short" }) };
-      const rawMonth = month;
+    const chartData = sortedPeriods.map(period => {
+      let label = "";
+      if (viewMode === "monthly") {
+        label = new Date(period + "-01").toLocaleDateString("th-TH", { month: "short" });
+      } else {
+        const [y, m, w] = period.split('-');
+        const monthName = new Date(`${y}-${m}-01`).toLocaleDateString("th-TH", { month: "short" });
+        label = `${monthName} สัปดาห์ ${w.replace('W', '')}`;
+      }
+      
+      const dataPoint: any = { period: label };
+      const periodPrefix = viewMode === "monthly" ? period : period.substring(0, 7); // "YYYY-MM"
       
       filteredHomerooms.forEach(hr => {
         let hrScore = 0;
         
+        const isMatch = (dateStr: string) => {
+          if (!dateStr) return false;
+          if (viewMode === "monthly") return dateStr.startsWith(periodPrefix);
+          const [y, m] = dateStr.split('-');
+          const week = getWeekOfMonth(dateStr);
+          return `${y}-${m}-W${week}` === period;
+        };
+        
         if (selectedCategory === "area") {
-          const areaRecs = areaStats.filter(r => r.homeroom_id === hr.id && r.evaluated_at?.startsWith(rawMonth));
+          const areaRecs = areaStats.filter(r => r.homeroom_id === hr.id && isMatch(r.evaluated_at));
           const avgA = areaRecs.length > 0 ? areaRecs.reduce((s, r) => s + (r.percentage||0), 0) / areaRecs.length : 0;
           hrScore = avgA;
         }
         
         if (selectedCategory === "classroom") {
-          const classRecs = classroomStats.filter(r => r.homeroom_id === hr.id && r.evaluated_at?.startsWith(rawMonth));
+          const classRecs = classroomStats.filter(r => r.homeroom_id === hr.id && isMatch(r.evaluated_at));
           const avgC = classRecs.length > 0 ? classRecs.reduce((s, r) => s + (r.percentage||0), 0) / classRecs.length : 0;
           hrScore = avgC;
         }
 
         if (selectedCategory === "water") {
-          const waterRecs = waterStats.filter(r => r.homeroom_id === hr.id && r.check_date?.startsWith(rawMonth));
+          const waterRecs = waterStats.filter(r => r.homeroom_id === hr.id && isMatch(r.check_date));
           const avgW = waterRecs.length > 0 ? waterRecs.reduce((s, r) => s + (r.percentage||0), 0) / waterRecs.length : 0;
           hrScore = avgW;
         }
@@ -227,8 +265,8 @@ export function DashboardContent({
       return dataPoint;
     });
 
-    return { chartData, sortedMonths, filteredHomerooms };
-  }, [areaStats, classroomStats, waterStats, homerooms, selectedGrade, selectedCategory]);
+    return { chartData, sortedPeriods, filteredHomerooms };
+  }, [areaStats, classroomStats, waterStats, homerooms, selectedGrade, selectedCategory, viewMode]);
 
   // --- Today's Submission Tracker Logic ---
   const [submissionGrade, setSubmissionGrade] = useState<string>("1");
@@ -303,20 +341,56 @@ export function DashboardContent({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <h2 className="font-semibold text-gray-900 dark:text-white text-lg">
-              กราฟความคืบหน้ารายเดือน 📈
+              กราฟความคืบหน้า 📈
             </h2>
             <p className="text-xs text-gray-400 mt-0.5">เปรียบเทียบคะแนนแต่ละห้องเรียน เพื่อดูพัฒนาการ</p>
           </div>
-          <div className="flex items-center gap-2">
-            <select 
-              value={selectedCategory} 
-              onChange={e => setSelectedCategory(e.target.value as any)}
-              className="bg-gray-50 dark:bg-gray-800 border-none text-sm rounded-lg focus:ring-0 cursor-pointer text-gray-900 dark:text-white"
-            >
-              <option value="area">พื้นที่รับผิดชอบ</option>
-              <option value="classroom">ห้องเรียนสะอาด</option>
-              <option value="water">แก้วน้ำส่วนตัว</option>
-            </select>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+              <button
+                onClick={() => setViewMode("monthly")}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  viewMode === "monthly" ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                }`}
+              >
+                รายเดือน
+              </button>
+              <button
+                onClick={() => setViewMode("weekly")}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  viewMode === "weekly" ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                }`}
+              >
+                รายสัปดาห์
+              </button>
+            </div>
+            
+            <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg mr-2">
+              <button
+                onClick={() => setSelectedCategory("area")}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 ${
+                  selectedCategory === "area" ? "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400 shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5" /> พื้นที่
+              </button>
+              <button
+                onClick={() => setSelectedCategory("classroom")}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 ${
+                  selectedCategory === "classroom" ? "bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-400 shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                }`}
+              >
+                <School className="w-3.5 h-3.5" /> ห้องเรียน
+              </button>
+              <button
+                onClick={() => setSelectedCategory("water")}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 ${
+                  selectedCategory === "water" ? "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                }`}
+              >
+                <Droplets className="w-3.5 h-3.5" /> แก้วน้ำ
+              </button>
+            </div>
             <select 
               value={selectedGrade} 
               onChange={e => setSelectedGrade(e.target.value)}
@@ -332,16 +406,16 @@ export function DashboardContent({
           </div>
         </div>
 
-        {monthlyData.chartData.length > 0 ? (
+        {progressData.chartData.length > 0 ? (
           <>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={monthlyData.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <LineChart data={progressData.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" vertical={false} />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fontFamily: "Sarabun", fill: "currentColor" }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="period" tick={{ fontSize: 12, fontFamily: "Sarabun", fill: "currentColor" }} axisLine={false} tickLine={false} />
                 <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: "currentColor" }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={{ borderRadius: "12px", fontFamily: "Sarabun", fontSize: 13, border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)", background: "var(--background)", color: "var(--foreground)" }} />
                 <Legend wrapperStyle={{ fontFamily: "Sarabun", fontSize: 12, paddingTop: "20px", color: "currentColor" }} />
-                {monthlyData.filteredHomerooms.map((hr, idx) => (
+                {progressData.filteredHomerooms.map((hr, idx) => (
                   <Line 
                     key={hr.id}
                     type="monotone"
@@ -362,29 +436,27 @@ export function DashboardContent({
                 <thead>
                   <tr>
                     <th className="text-left w-32">ห้องเรียน</th>
-                    {monthlyData.sortedMonths.map(m => (
-                      <th key={m} className="text-center">{new Date(m + "-01").toLocaleDateString("th-TH", { month: "short" })}</th>
+                    {progressData.chartData.map(d => (
+                      <th key={d.period} className="text-center">{d.period}</th>
                     ))}
                     <th className="text-center">เฉลี่ยรวม</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {monthlyData.filteredHomerooms.map(hr => {
+                  {progressData.filteredHomerooms.map(hr => {
                     let total = 0;
                     let count = 0;
                     return (
                       <tr key={hr.id}>
                         <td className="font-semibold text-gray-900 dark:text-white">{hr.class_name}</td>
-                        {monthlyData.sortedMonths.map(m => {
-                          const monthStr = new Date(m + "-01").toLocaleDateString("th-TH", { month: "short" });
-                          const rowData = monthlyData.chartData.find(d => d.month === monthStr);
-                          const val = rowData ? rowData[hr.class_name] : null;
+                        {progressData.chartData.map(d => {
+                          const val = d[hr.class_name];
                           if (val) {
                             total += val;
                             count++;
                           }
                           return (
-                            <td key={m} className="text-center">
+                            <td key={d.period} className="text-center">
                               {val ? (
                                 <span className={`font-medium ${val >= 80 ? 'text-green-600' : val >= 60 ? 'text-amber-600' : 'text-red-500'}`}>
                                   {val}%
