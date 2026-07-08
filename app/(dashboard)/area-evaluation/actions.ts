@@ -348,17 +348,23 @@ export async function evaluateAreaReport(evaluationId: string, formData: FormDat
     .eq("id", evaluationId)
     .single();
 
-  if (evalData?.responsible_areas?.homerooms?.grade_level) {
-    const className = evalData.responsible_areas.homerooms.class_name;
-    await notifyGradeHead(
-      adminClient,
-      evalData.responsible_areas.homerooms.grade_level,
-      "มีการประเมินพื้นที่รับผิดชอบใหม่ (โดยสภานักเรียน)",
-      `รอการอนุมัติ: ประเมินพื้นที่รับผิดชอบของห้อง ${className}`,
-      "area_evaluation",
-      evaluationId,
-      "/area-evaluation/approvals"
-    );
+  if (evalData?.responsible_areas) {
+    const area = Array.isArray(evalData.responsible_areas) ? evalData.responsible_areas[0] : evalData.responsible_areas;
+    if (area?.homerooms) {
+      const homeroom = Array.isArray(area.homerooms) ? area.homerooms[0] : area.homerooms;
+      if (homeroom?.grade_level) {
+        const className = homeroom.class_name;
+        await notifyGradeHead(
+          adminClient,
+          homeroom.grade_level,
+          "มีการประเมินพื้นที่รับผิดชอบใหม่ (โดยสภานักเรียน)",
+          `รอการอนุมัติ: ประเมินพื้นที่รับผิดชอบของห้อง ${className}`,
+          "area_evaluation",
+          evaluationId,
+          "/area-evaluation/approvals"
+        );
+      }
+    }
   }
 
   revalidatePath("/area-evaluation");
