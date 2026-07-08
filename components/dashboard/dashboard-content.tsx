@@ -341,10 +341,10 @@ export function DashboardContent({
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={monthlyData.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" vertical={false} />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fontFamily: "Sarabun" }} axisLine={false} tickLine={false} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ borderRadius: "12px", fontFamily: "Sarabun", fontSize: 13, border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
-                <Legend wrapperStyle={{ fontFamily: "Sarabun", fontSize: 12, paddingTop: "20px" }} />
+                <XAxis dataKey="month" tick={{ fontSize: 12, fontFamily: "Sarabun", fill: "currentColor" }} axisLine={false} tickLine={false} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: "currentColor" }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ borderRadius: "12px", fontFamily: "Sarabun", fontSize: 13, border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)", background: "var(--background)", color: "var(--foreground)" }} />
+                <Legend wrapperStyle={{ fontFamily: "Sarabun", fontSize: 12, paddingTop: "20px", color: "currentColor" }} />
                 {monthlyData.filteredHomerooms.map((hr, idx) => (
                   <Line 
                     key={hr.id}
