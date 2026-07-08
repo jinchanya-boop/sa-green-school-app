@@ -209,9 +209,9 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
                 2
               </div>
               <div className={`w-full rounded-t-2xl p-2 sm:p-3 text-center h-20 flex flex-col justify-center ${activeTab === 'overall' ? 'bg-slate-100 dark:bg-slate-800' : `${theme.bgIcon.split(' ')[0]}/40 dark:bg-gray-800 border border-gray-200 dark:border-gray-700`}`}>
-                <p className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white line-clamp-1">{displayData[1].class}</p>
+                <p className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white line-clamp-1">{(displayData[1] as any).class}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatPercent(activeTab === 'overall' ? displayData[1].total : displayData[1].avgPercentage)}
+                  {formatPercent(activeTab === 'overall' ? (displayData[1] as any).total : (displayData[1] as any).avgPercentage)}
                 </p>
               </div>
             </div>
@@ -225,10 +225,10 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
               </div>
               <div className={`w-full border-2 rounded-t-2xl p-2 sm:p-3 text-center h-28 flex flex-col justify-center bg-white dark:bg-gray-900 shadow-md ${theme.border} ${theme.shadow}`}>
                 <p className={`font-bold text-xs sm:text-sm line-clamp-1 ${theme.text}`}>
-                  {displayData[0].class}
+                  {(displayData[0] as any).class}
                 </p>
                 <p className={`text-xs font-semibold mt-0.5 ${theme.text}`}>
-                  {formatPercent(activeTab === 'overall' ? displayData[0].total : displayData[0].avgPercentage)}
+                  {formatPercent(activeTab === 'overall' ? (displayData[0] as any).total : (displayData[0] as any).avgPercentage)}
                 </p>
               </div>
             </div>
@@ -240,9 +240,9 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
                 3
               </div>
               <div className={`w-full rounded-t-2xl p-2 sm:p-3 text-center h-16 flex flex-col justify-center ${activeTab === 'overall' ? 'bg-orange-50 dark:bg-orange-950' : 'bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700'}`}>
-                <p className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white line-clamp-1">{displayData[2].class}</p>
+                <p className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white line-clamp-1">{(displayData[2] as any).class}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatPercent(activeTab === 'overall' ? displayData[2].total : displayData[2].avgPercentage)}
+                  {formatPercent(activeTab === 'overall' ? (displayData[2] as any).total : (displayData[2] as any).avgPercentage)}
                 </p>
               </div>
             </div>

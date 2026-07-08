@@ -53,8 +53,8 @@ export function StudentList({ homerooms, students }: StudentListProps) {
   const handleGenerateAccount = async (studentId: string) => {
     if (confirm("ระบบจะสร้างบัญชีสำหรับนักเรียนคนนี้เพื่อใช้เข้าระบบประเมิน ยืนยันหรือไม่?")) {
       const res = await generateStudentAccount(studentId);
-      if (res.success) {
-        const username = res.email.split("@")[0];
+      if (res.success && res.email!) {
+        const username = res.email!.split("@")[0];
         alert(`สร้างบัญชีสำเร็จ!\nชื่อผู้ใช้งาน: ${username}\nรหัสผ่าน: ${res.password}\n(โปรดแจ้งข้อมูลนี้ให้นักเรียนทราบ)`);
       } else {
         alert(res.error);

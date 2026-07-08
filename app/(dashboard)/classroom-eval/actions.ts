@@ -380,16 +380,19 @@ export async function evaluateClassroomReport(evaluationId: string, formData: Fo
     .eq("id", evaluationId)
     .single();
 
-  if (evData?.rooms?.building_id) {
-    await notifyBuildingHead(
-      adminClient,
-      evData.rooms.building_id,
-      "มีการประเมินห้องเรียนใหม่ (โดยสภานักเรียน)",
-      `รอการอนุมัติ: ประเมินความสะอาดห้องเรียน ${evData.rooms.name}`,
-      "classroom_evaluation",
-      evaluationId,
-      "/classroom-eval"
-    );
+  if (evData?.rooms) {
+    const room = Array.isArray(evData.rooms) ? evData.rooms[0] : evData.rooms;
+    if (room?.building_id) {
+      await notifyBuildingHead(
+        adminClient,
+        room.building_id,
+        "มีการประเมินห้องเรียนใหม่ (โดยสภานักเรียน)",
+        `รอการอนุมัติ: ประเมินความสะอาดห้องเรียน ${room.name}`,
+        "classroom_evaluation",
+        evaluationId,
+        "/classroom-eval"
+      );
+    }
   }
 
   revalidatePath("/classroom-eval");
