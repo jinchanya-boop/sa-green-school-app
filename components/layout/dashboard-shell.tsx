@@ -32,7 +32,7 @@ export function DashboardShell({ children, profile }: DashboardShellProps) {
     <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-950">
       {/* Sidebar */}
       <Sidebar
-        collapsed={!sidebarOpen}
+        collapsed={!sidebarOpen && !mobileOpen}
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
         profile={profile}
