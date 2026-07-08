@@ -105,29 +105,7 @@ export function DashboardContent({
       color: GRADE_COLORS[grade as keyof typeof GRADE_COLORS] ?? "#6b7280",
     }));
 
-  const barData = [
-    {
-      name: "พื้นที่",
-      ทอง: areaGrades.gold,
-      เงิน: areaGrades.silver,
-      ทองแดง: areaGrades.bronze,
-      ไม่ผ่าน: areaGrades.fail,
-    },
-    {
-      name: "ห้องเรียน",
-      ทอง: classroomGrades.gold,
-      เงิน: classroomGrades.silver,
-      ทองแดง: classroomGrades.bronze,
-      ไม่ผ่าน: classroomGrades.fail,
-    },
-    {
-      name: "แก้วน้ำ",
-      ทอง: waterGrades.gold,
-      เงิน: waterGrades.silver,
-      ทองแดง: waterGrades.bronze,
-      ไม่ผ่าน: waterGrades.fail,
-    },
-  ];
+
 
   const avgArea = avgPercent(areaStats);
   const avgClass = avgPercent(classroomStats);
@@ -178,6 +156,34 @@ export function DashboardContent({
   const [selectedGrade, setSelectedGrade] = useState<string>("1");
   const [selectedCategory, setSelectedCategory] = useState<"area" | "classroom" | "water">("area");
   const [viewMode, setViewMode] = useState<"monthly" | "weekly">("monthly");
+  
+  // --- Comparison Logic ---
+  const [comparisonGrade, setComparisonGrade] = useState<string>("1");
+  const [comparisonCategory, setComparisonCategory] = useState<"area" | "classroom" | "water">("area");
+
+  const comparisonData = useMemo(() => {
+    const targetStats = comparisonCategory === "area" 
+      ? areaStats 
+      : comparisonCategory === "classroom" ? classroomStats : waterStats;
+    
+    return homerooms
+      .filter(hr => hr.grade_level?.toString() === comparisonGrade)
+      .sort((a, b) => (a.class_number || 0) - (b.class_number || 0))
+      .map(hr => {
+        const records = targetStats.filter(r => r.homeroom_id === hr.id);
+        const score = records.length ? avgPercent(records) : 0;
+        let color = "#EF4444"; // fail
+        if (score >= 90) color = "#F59E0B"; // gold
+        else if (score >= 80) color = "#94A3B8"; // silver
+        else if (score >= 70) color = "#B45309"; // bronze
+        
+        return {
+          name: hr.class_name,
+          score: Number(score.toFixed(1)),
+          fill: records.length === 0 ? "#E5E7EB" : color
+        };
+      });
+  }, [comparisonCategory, comparisonGrade, homerooms, areaStats, classroomStats, waterStats]);
 
   const progressData = useMemo(() => {
     const periods = new Set<string>();
@@ -649,21 +655,67 @@ export function DashboardContent({
       >
         {/* Grade Comparison Bar */}
         <div className="stat-card">
-          <div className="mb-4">
-            <h2 className="font-semibold text-gray-900 dark:text-white">เปรียบเทียบระดับคะแนน</h2>
-            <p className="text-xs text-gray-400 mt-0.5">ภาพรวมทั้งโรงเรียน</p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 className="font-semibold text-gray-900 dark:text-white">เปรียบเทียบระดับคะแนน</h2>
+              <p className="text-xs text-gray-400 mt-0.5">แบ่งตามชั้นปีและหมวดหมู่</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                <button
+                  onClick={() => setComparisonCategory("area")}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 ${
+                    comparisonCategory === "area" ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                  }`}
+                >
+                  <MapPin className="w-3.5 h-3.5" /> พื้นที่
+                </button>
+                <button
+                  onClick={() => setComparisonCategory("classroom")}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 ${
+                    comparisonCategory === "classroom" ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                  }`}
+                >
+                  <School className="w-3.5 h-3.5" /> ห้องเรียน
+                </button>
+                <button
+                  onClick={() => setComparisonCategory("water")}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 ${
+                    comparisonCategory === "water" ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                  }`}
+                >
+                  <Droplets className="w-3.5 h-3.5" /> แก้วน้ำ
+                </button>
+              </div>
+              <select 
+                value={comparisonGrade} 
+                onChange={e => setComparisonGrade(e.target.value)}
+                className="bg-gray-50 dark:bg-gray-800 border-none text-sm rounded-lg focus:ring-0 cursor-pointer text-gray-900 dark:text-white py-1.5"
+              >
+                <option value="1">ม.1</option>
+                <option value="2">ม.2</option>
+                <option value="3">ม.3</option>
+                <option value="4">ม.4</option>
+                <option value="5">ม.5</option>
+                <option value="6">ม.6</option>
+              </select>
+            </div>
           </div>
           <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={barData} barSize={20}>
+            <BarChart data={comparisonData} barSize={30}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" vertical={false} />
               <XAxis dataKey="name" tick={{ fontSize: 12, fontFamily: "Sarabun" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-              <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: "12px", fontFamily: "Sarabun", fontSize: 13, border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)", background: "var(--background)", color: "var(--foreground)" }} />
-              <Legend wrapperStyle={{ fontFamily: "Sarabun", fontSize: 12, paddingTop: "10px" }} />
-              <Bar dataKey="ทอง" fill="#F59E0B" radius={[4,4,0,0]} />
-              <Bar dataKey="เงิน" fill="#94A3B8" radius={[4,4,0,0]} />
-              <Bar dataKey="ทองแดง" fill="#B45309" radius={[4,4,0,0]} />
-              <Bar dataKey="ไม่ผ่าน" fill="#EF4444" radius={[4,4,0,0]} />
+              <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} domain={[0, 100]} />
+              <Tooltip 
+                cursor={{ fill: 'transparent' }} 
+                contentStyle={{ borderRadius: "12px", fontFamily: "Sarabun", fontSize: 13, border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)", background: "var(--background)", color: "var(--foreground)" }}
+                formatter={(value: any) => [`${value}%`, 'คะแนน']} 
+              />
+              <Bar dataKey="score" radius={[4,4,0,0]}>
+                {comparisonData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
