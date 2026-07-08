@@ -160,6 +160,17 @@ export function DashboardContent({
   // --- Comparison Logic ---
   const [comparisonGrade, setComparisonGrade] = useState<string>("1");
   const [comparisonCategory, setComparisonCategory] = useState<"area" | "classroom" | "water">("area");
+  
+  // --- Rankings Logic ---
+  const [rankingFilter, setRankingFilter] = useState<string>("junior");
+  const filteredRankings = useMemo(() => {
+    return rankings.filter(r => {
+      const grade = r.homeroom?.grade_level?.toString() || "";
+      if (rankingFilter === "junior") return ["1", "2", "3"].includes(grade);
+      if (rankingFilter === "senior") return ["4", "5", "6"].includes(grade);
+      return true;
+    });
+  }, [rankings, rankingFilter]);
 
   const comparisonData = useMemo(() => {
     const targetStats = comparisonCategory === "area" 
@@ -167,7 +178,11 @@ export function DashboardContent({
       : comparisonCategory === "classroom" ? classroomStats : waterStats;
     
     return homerooms
-      .filter(hr => comparisonGrade === "all" ? true : hr.grade_level?.toString() === comparisonGrade)
+      .filter(hr => {
+        if (comparisonGrade === "junior") return ["1", "2", "3"].includes(hr.grade_level?.toString() || "");
+        if (comparisonGrade === "senior") return ["4", "5", "6"].includes(hr.grade_level?.toString() || "");
+        return hr.grade_level?.toString() === comparisonGrade;
+      })
       .sort((a, b) => (a.class_number || 0) - (b.class_number || 0))
       .map(hr => {
         const records = targetStats.filter(r => r.homeroom_id === hr.id);
@@ -698,7 +713,8 @@ export function DashboardContent({
                 <option value="4">ม.4</option>
                 <option value="5">ม.5</option>
                 <option value="6">ม.6</option>
-                <option value="all">ทั้งหมด</option>
+                <option value="junior">ม.ต้น</option>
+                <option value="senior">ม.ปลาย</option>
               </select>
             </div>
           </div>
@@ -730,15 +746,25 @@ export function DashboardContent({
               <h2 className="font-semibold text-gray-900 dark:text-white">แชมป์สุดยอดห้องเรียน</h2>
               <p className="text-xs text-gray-400 mt-0.5">คะแนนสะสมรวมสูงสุด (Overall)</p>
             </div>
-            <Trophy className="w-5 h-5 text-amber-500" />
+            <div className="flex items-center gap-2">
+              <select 
+                value={rankingFilter}
+                onChange={e => setRankingFilter(e.target.value)}
+                className="bg-gray-50 dark:bg-gray-800 border-none text-xs rounded-lg focus:ring-0 cursor-pointer text-gray-900 dark:text-white py-1"
+              >
+                <option value="junior">ม.ต้น</option>
+                <option value="senior">ม.ปลาย</option>
+              </select>
+              <Trophy className="w-5 h-5 text-amber-500" />
+            </div>
           </div>
           <div className="space-y-3 flex-1">
-            {rankings.length === 0 ? (
+            {filteredRankings.length === 0 ? (
               <p className="text-sm text-gray-500 py-4 text-center border-2 border-dashed border-gray-100 rounded-xl">
                 ยังไม่มีข้อมูลคะแนนรวม
               </p>
             ) : (
-              rankings.slice(0, 5).map((r, i) => {
+              filteredRankings.slice(0, 5).map((r, i) => {
                 const rank = i + 1;
                 return (
                   <div key={r.id} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border border-transparent hover:border-gray-100 dark:hover:border-gray-700">

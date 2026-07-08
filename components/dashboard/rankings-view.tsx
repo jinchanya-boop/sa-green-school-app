@@ -24,6 +24,7 @@ function getGrade(percentage: number) {
 
 export function RankingsView({ homerooms, waterRecords, areaRecords, classRecords, overallScores }: RankingsViewProps) {
   const [activeTab, setActiveTab] = useState<TabType>("area");
+  const [rankingGroup, setRankingGroup] = useState<"junior" | "senior">("junior");
   
   const currentMonth = new Date().toISOString().slice(0, 7);
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
@@ -61,7 +62,14 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
       }
     });
 
-    const rankingsData = homerooms.map(hr => {
+    const filteredHomerooms = homerooms.filter(hr => {
+      const grade = hr.grade_level?.toString() || "";
+      if (rankingGroup === "junior") return ["1", "2", "3"].includes(grade);
+      if (rankingGroup === "senior") return ["4", "5", "6"].includes(grade);
+      return true;
+    });
+
+    const rankingsData = filteredHomerooms.map(hr => {
       const recs = hrMap.get(hr.id) || [];
       const totalChecks = recs.length;
       const avgPercentage = totalChecks > 0 
@@ -101,9 +109,9 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
     }));
   };
 
-  const waterRankings = useMemo(() => processRankings(waterRecords, "check_date"), [homerooms, waterRecords, selectedMonth]);
-  const areaRankings = useMemo(() => processRankings(areaRecords, "eval_date", true), [homerooms, areaRecords, selectedMonth]);
-  const classroomRankings = useMemo(() => processRankings(classRecords, "eval_date"), [homerooms, classRecords, selectedMonth]);
+  const waterRankings = useMemo(() => processRankings(waterRecords, "check_date"), [homerooms, waterRecords, selectedMonth, rankingGroup]);
+  const areaRankings = useMemo(() => processRankings(areaRecords, "eval_date", true), [homerooms, areaRecords, selectedMonth, rankingGroup]);
+  const classroomRankings = useMemo(() => processRankings(classRecords, "eval_date"), [homerooms, classRecords, selectedMonth, rankingGroup]);
 
   const getDisplayData = () => {
     switch (activeTab) {
@@ -169,7 +177,8 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
         </div>
       </div>
 
-        <div className="flex items-center gap-2 bg-white dark:bg-gray-900 p-3 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm max-w-sm">
+      <div className="flex flex-col sm:flex-row items-center gap-4">
+        <div className="flex items-center gap-2 bg-white dark:bg-gray-900 p-3 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm w-full sm:max-w-sm">
           <Calendar className="w-4 h-4 text-gray-400" />
           <span className="text-sm text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap">ประจำเดือน:</span>
           <select 
@@ -184,6 +193,20 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
             })}
           </select>
         </div>
+
+        <div className="flex items-center gap-2 bg-white dark:bg-gray-900 p-3 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm w-full sm:max-w-xs">
+          <School className="w-4 h-4 text-gray-400" />
+          <span className="text-sm text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap">ระดับชั้น:</span>
+          <select 
+            value={rankingGroup}
+            onChange={(e) => setRankingGroup(e.target.value as "junior" | "senior")}
+            className="w-full bg-gray-50 dark:bg-gray-800 border-none text-sm rounded-lg focus:ring-0 cursor-pointer text-gray-900 dark:text-white"
+          >
+            <option value="junior">ม.ต้น (ม.1 - ม.3)</option>
+            <option value="senior">ม.ปลาย (ม.4 - ม.6)</option>
+          </select>
+        </div>
+      </div>
 
       {/* Podium */}
       {displayData.length > 0 ? (
