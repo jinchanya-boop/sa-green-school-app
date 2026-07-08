@@ -13,7 +13,7 @@ interface RankingsViewProps {
   overallScores: any[];
 }
 
-type TabType = "overall" | "area" | "classroom" | "water";
+type TabType = "area" | "classroom" | "water";
 
 function getGrade(percentage: number) {
   if (percentage >= 90) return "gold";
@@ -24,7 +24,7 @@ function getGrade(percentage: number) {
 }
 
 export function RankingsView({ homerooms, waterRecords, areaRecords, classRecords, overallScores }: RankingsViewProps) {
-  const [activeTab, setActiveTab] = useState<TabType>("overall");
+  const [activeTab, setActiveTab] = useState<TabType>("area");
   
   const currentMonth = new Date().toISOString().slice(0, 7);
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
@@ -46,19 +46,7 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
     return sorted;
   }, [waterRecords, areaRecords, classRecords, currentMonth]);
 
-  const overallRankings = useMemo(() => {
-    return overallScores.map((score, index) => ({
-      rank: index + 1,
-      class: score.homeroom?.class_name || "ไม่ระบุ",
-      building: score.homeroom?.buildings?.name || "ไม่ระบุ",
-      area: score.area_score || 0,
-      classroom: score.classroom_score || 0,
-      water: score.water_score || 0,
-      total: score.total_score || 0,
-      grade: score.grade || "pass",
-      trend: "stable",
-    }));
-  }, [overallScores]);
+
 
   // Generic function to process rankings for a specific type (area, class, water)
   const processRankings = (records: any[], dateField: string, isArea: boolean = false) => {
@@ -123,7 +111,7 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
       case "area": return areaRankings;
       case "classroom": return classroomRankings;
       case "water": return waterRankings;
-      default: return overallRankings;
+      default: return areaRankings;
     }
   };
 
@@ -134,7 +122,7 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
       case "area": return { icon: MapPin, text: "text-green-600 dark:text-green-400", bgIcon: "bg-green-100 text-green-700", border: "border-green-200", shadow: "shadow-green-100", title: "พื้นที่รับผิดชอบ", activeBtn: "text-green-600 dark:text-green-400" };
       case "classroom": return { icon: School, text: "text-purple-600 dark:text-purple-400", bgIcon: "bg-purple-100 text-purple-700", border: "border-purple-200", shadow: "shadow-purple-100", title: "ห้องเรียนสะอาด", activeBtn: "text-purple-600 dark:text-purple-400" };
       case "water": return { icon: Droplets, text: "text-blue-600 dark:text-blue-400", bgIcon: "bg-blue-100 text-blue-700", border: "border-blue-200", shadow: "shadow-blue-100", title: "แชมป์แก้วน้ำส่วนตัว", activeBtn: "text-blue-600 dark:text-blue-400" };
-      default: return { icon: Trophy, text: "text-amber-600 dark:text-amber-400", bgIcon: "bg-amber-100 text-amber-700", border: "border-amber-200", shadow: "shadow-amber-100", title: "แชมป์ที่สุด (Overall)", activeBtn: "text-gray-900 dark:text-white" };
+      default: return { icon: MapPin, text: "text-green-600 dark:text-green-400", bgIcon: "bg-green-100 text-green-700", border: "border-green-200", shadow: "shadow-green-100", title: "พื้นที่รับผิดชอบ", activeBtn: "text-green-600 dark:text-green-400" };
     }
   };
 
@@ -156,13 +144,13 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">การจัดอันดับ</h1>
             <p className="text-gray-400 text-sm">
-              {activeTab === "overall" ? "ภาคเรียนที่ 1/2567 — คะแนนสะสมทุกด้าน" : `${theme.title} — ประจำเดือน`}
+              {`${theme.title} — ประจำเดือน`}
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap bg-gray-100 dark:bg-gray-800 p-1 rounded-xl w-full xl:w-auto overflow-x-auto gap-1">
-          {(["overall", "area", "classroom", "water"] as TabType[]).map((tab) => {
+          {(["area", "classroom", "water"] as TabType[]).map((tab) => {
             const isTabActive = activeTab === tab;
             const tabTheme = getTabColors(tab);
             const TabIcon = tabTheme.icon;
@@ -182,7 +170,6 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
         </div>
       </div>
 
-      {activeTab !== "overall" && (
         <div className="flex items-center gap-2 bg-white dark:bg-gray-900 p-3 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm max-w-sm">
           <Calendar className="w-4 h-4 text-gray-400" />
           <span className="text-sm text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap">ประจำเดือน:</span>
@@ -198,7 +185,6 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
             })}
           </select>
         </div>
-      )}
 
       {/* Podium */}
       {displayData.length > 0 ? (
@@ -208,10 +194,10 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
               <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold text-lg mb-2">
                 2
               </div>
-              <div className={`w-full rounded-t-2xl p-2 sm:p-3 text-center h-20 flex flex-col justify-center ${activeTab === 'overall' ? 'bg-slate-100 dark:bg-slate-800' : `${theme.bgIcon.split(' ')[0]}/40 dark:bg-gray-800 border border-gray-200 dark:border-gray-700`}`}>
+              <div className={`w-full rounded-t-2xl p-2 sm:p-3 text-center h-20 flex flex-col justify-center ${theme.bgIcon.split(' ')[0]}/40 dark:bg-gray-800 border border-gray-200 dark:border-gray-700`}>
                 <p className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white line-clamp-1">{(displayData[1] as any).class}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatPercent(activeTab === 'overall' ? (displayData[1] as any).total : (displayData[1] as any).avgPercentage)}
+                  {formatPercent((displayData[1] as any).avgPercentage)}
                 </p>
               </div>
             </div>
@@ -228,7 +214,7 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
                   {(displayData[0] as any).class}
                 </p>
                 <p className={`text-xs font-semibold mt-0.5 ${theme.text}`}>
-                  {formatPercent(activeTab === 'overall' ? (displayData[0] as any).total : (displayData[0] as any).avgPercentage)}
+                  {formatPercent((displayData[0] as any).avgPercentage)}
                 </p>
               </div>
             </div>
@@ -239,10 +225,10 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
               <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center text-orange-700 dark:text-orange-300 font-bold text-lg mb-2">
                 3
               </div>
-              <div className={`w-full rounded-t-2xl p-2 sm:p-3 text-center h-16 flex flex-col justify-center ${activeTab === 'overall' ? 'bg-orange-50 dark:bg-orange-950' : 'bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700'}`}>
+              <div className={`w-full rounded-t-2xl p-2 sm:p-3 text-center h-16 flex flex-col justify-center bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700`}>
                 <p className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white line-clamp-1">{(displayData[2] as any).class}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatPercent(activeTab === 'overall' ? (displayData[2] as any).total : (displayData[2] as any).avgPercentage)}
+                  {formatPercent((displayData[2] as any).avgPercentage)}
                 </p>
               </div>
             </div>
@@ -263,30 +249,18 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
                   <th className="text-left">ห้องเรียน</th>
                   <th className="text-left hidden sm:table-cell">อาคาร</th>
                   
-                  {activeTab === "overall" ? (
-                    <>
-                      <th className="text-center">พื้นที่</th>
-                      <th className="text-center">ห้องเรียน</th>
-                      <th className="text-center">แก้วน้ำ</th>
-                      <th className="text-center">รวม</th>
-                      <th className="text-center">ระดับ</th>
-                    </>
-                  ) : (
-                    <>
                       <th className="text-center hidden md:table-cell">ตรวจ (ครั้ง)</th>
                       <th className="text-center">สัปดาห์ 1</th>
                       <th className="text-center">สัปดาห์ 2</th>
                       <th className="text-center">สัปดาห์ 3</th>
                       <th className="text-center">สัปดาห์ 4</th>
                       <th className={`text-center font-bold ${theme.text}`}>เฉลี่ยเดือนนี้</th>
-                    </>
-                  )}
                   <th className="text-center">แนวโน้ม</th>
                 </tr>
               </thead>
               <tbody>
                 {displayData.map((r: any) => (
-                  <tr key={r.rank} className={r.rank <= 3 ? (activeTab === 'overall' ? "bg-amber-50/30 dark:bg-amber-950/20" : "bg-gray-50/50 dark:bg-gray-800/30") : ""}>
+                  <tr key={r.rank} className={r.rank <= 3 ? "bg-gray-50/50 dark:bg-gray-800/30" : ""}>
                     <td className="text-center">
                       <span className={`w-7 h-7 inline-flex items-center justify-center rounded-lg font-bold text-sm ${
                         r.rank === 1 ? theme.bgIcon :
@@ -300,22 +274,6 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
                     <td className="font-semibold text-gray-900 dark:text-white text-sm whitespace-nowrap">{r.class}</td>
                     <td className="text-sm text-gray-500 hidden sm:table-cell">{r.building}</td>
                     
-                    {activeTab === "overall" ? (
-                      <>
-                        <td className="text-center text-sm font-medium text-gray-700 dark:text-gray-300">{formatPercent(r.area)}</td>
-                        <td className="text-center text-sm font-medium text-gray-700 dark:text-gray-300">{formatPercent(r.classroom)}</td>
-                        <td className="text-center text-sm font-medium text-gray-700 dark:text-gray-300">{formatPercent(r.water)}</td>
-                        <td className="text-center">
-                          <span className="font-bold text-gray-900 dark:text-white">{formatPercent(r.total)}</span>
-                        </td>
-                        <td className="text-center">
-                          <span className={`text-xs font-bold px-2 py-1 rounded-lg border whitespace-nowrap ${GRADE_BG[r.grade as keyof typeof GRADE_BG] || GRADE_BG['pass']}`}>
-                            {r.grade === "gold" ? "ทอง" : r.grade === "silver" ? "เงิน" : r.grade === "bronze" ? "ทองแดง" : "ผ่าน"}
-                          </span>
-                        </td>
-                      </>
-                    ) : (
-                      <>
                         <td className="text-center text-sm text-gray-500 hidden md:table-cell">{r.totalChecks}</td>
                         <td className="text-center text-sm text-gray-500">{r.weekly[0] !== null ? formatPercent(r.weekly[0]) : '-'}</td>
                         <td className="text-center text-sm text-gray-500">{r.weekly[1] !== null ? formatPercent(r.weekly[1]) : '-'}</td>
@@ -324,8 +282,6 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
                         <td className="text-center">
                           <span className={`font-bold ${theme.text}`}>{formatPercent(r.avgPercentage)}</span>
                         </td>
-                      </>
-                    )}
                     
                     <td className="text-center">
                       {r.trend === "up" ? <TrendingUp className="w-4 h-4 text-green-500 mx-auto" /> :

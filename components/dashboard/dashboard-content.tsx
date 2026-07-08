@@ -177,7 +177,7 @@ export function DashboardContent({
 
   // --- Monthly Progress Logic ---
   const [selectedGrade, setSelectedGrade] = useState<string>("1");
-  const [selectedCategory, setSelectedCategory] = useState<"area" | "classroom" | "water" | "overall">("overall");
+  const [selectedCategory, setSelectedCategory] = useState<"area" | "classroom" | "water">("area");
 
   const monthlyData = useMemo(() => {
     const months = new Set<string>();
@@ -203,25 +203,22 @@ export function DashboardContent({
       filteredHomerooms.forEach(hr => {
         let hrScore = 0;
         
-        if (selectedCategory === "area" || selectedCategory === "overall") {
+        if (selectedCategory === "area") {
           const areaRecs = areaStats.filter(r => r.homeroom_id === hr.id && r.evaluated_at?.startsWith(rawMonth));
           const avgA = areaRecs.length > 0 ? areaRecs.reduce((s, r) => s + (r.percentage||0), 0) / areaRecs.length : 0;
-          if (selectedCategory === "area") hrScore = avgA;
-          else hrScore += avgA * 0.4;
+          hrScore = avgA;
         }
         
-        if (selectedCategory === "classroom" || selectedCategory === "overall") {
+        if (selectedCategory === "classroom") {
           const classRecs = classroomStats.filter(r => r.homeroom_id === hr.id && r.evaluated_at?.startsWith(rawMonth));
           const avgC = classRecs.length > 0 ? classRecs.reduce((s, r) => s + (r.percentage||0), 0) / classRecs.length : 0;
-          if (selectedCategory === "classroom") hrScore = avgC;
-          else hrScore += avgC * 0.4;
+          hrScore = avgC;
         }
 
-        if (selectedCategory === "water" || selectedCategory === "overall") {
+        if (selectedCategory === "water") {
           const waterRecs = waterStats.filter(r => r.homeroom_id === hr.id && r.check_date?.startsWith(rawMonth));
           const avgW = waterRecs.length > 0 ? waterRecs.reduce((s, r) => s + (r.percentage||0), 0) / waterRecs.length : 0;
-          if (selectedCategory === "water") hrScore = avgW;
-          else hrScore += avgW * 0.2;
+          hrScore = avgW;
         }
 
         // Only add if there's any data
@@ -277,7 +274,7 @@ export function DashboardContent({
           return (
             <div
               key={stat.label}
-              className="stat-card group cursor-default"
+              className="stat-card bg-white dark:bg-gray-900 group cursor-default"
             >
               <div className="flex items-start justify-between">
                 <div className={`p-2.5 rounded-xl ${stat.bg}`}>
@@ -302,7 +299,7 @@ export function DashboardContent({
       </motion.div>
 
       {/* Monthly Progress Trends */}
-      <motion.div variants={itemVariants} className="stat-card">
+      <motion.div variants={itemVariants} className="stat-card bg-white dark:bg-gray-900">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <h2 className="font-semibold text-gray-900 dark:text-white text-lg">
@@ -316,7 +313,6 @@ export function DashboardContent({
               onChange={e => setSelectedCategory(e.target.value as any)}
               className="bg-gray-50 dark:bg-gray-800 border-none text-sm rounded-lg focus:ring-0 cursor-pointer text-gray-900 dark:text-white"
             >
-              <option value="overall">คะแนนรวมทุกด้าน</option>
               <option value="area">พื้นที่รับผิดชอบ</option>
               <option value="classroom">ห้องเรียนสะอาด</option>
               <option value="water">แก้วน้ำส่วนตัว</option>

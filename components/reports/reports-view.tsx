@@ -37,22 +37,23 @@ export function ReportsView({ homerooms, classroomEvals, areaEvals, waterEvals, 
       const avgArea = aEvals.length ? aEvals.reduce((s, e) => s + (e.percentage || 0), 0) / aEvals.length : 0;
       const avgWater = wEvals.length ? wEvals.reduce((s, e) => s + (e.percentage || 0), 0) / wEvals.length : 0;
       
-      const counts = [cEvals.length ? 1 : 0, aEvals.length ? 1 : 0, wEvals.length ? 1 : 0].reduce((a, b) => a + b, 0);
-      const total = counts > 0 ? (avgClassroom + avgArea + avgWater) / counts : 0;
-      
-      const grade = calculateGrade(total);
-      const gradeClass = GRADE_BG[grade as keyof typeof GRADE_BG] || "bg-gray-100 text-gray-800";
+      const gradeArea = calculateGrade(avgArea);
+      const gradeClassroom = calculateGrade(avgClassroom);
+      const gradeWater = calculateGrade(avgWater);
 
       return {
         class: hr.class_name,
         area: avgArea.toFixed(1),
         classroom: avgClassroom.toFixed(1),
         water: avgWater.toFixed(1),
-        total: total.toFixed(1),
-        grade,
-        gradeClass
+        gradeArea,
+        gradeClassroom,
+        gradeWater,
+        gradeAreaClass: GRADE_BG[gradeArea as keyof typeof GRADE_BG] || "bg-gray-100 text-gray-800",
+        gradeClassroomClass: GRADE_BG[gradeClassroom as keyof typeof GRADE_BG] || "bg-gray-100 text-gray-800",
+        gradeWaterClass: GRADE_BG[gradeWater as keyof typeof GRADE_BG] || "bg-gray-100 text-gray-800",
       };
-    }).sort((a, b) => Number(b.total) - Number(a.total));
+    }).sort((a, b) => Number(b.area) + Number(b.classroom) + Number(b.water) - (Number(a.area) + Number(a.classroom) + Number(a.water)));
   }, [homerooms, classroomEvals, areaEvals, waterEvals]);
 
   // Aggregate data for chart (by week)
@@ -186,8 +187,9 @@ export function ReportsView({ homerooms, classroomEvals, areaEvals, waterEvals, 
                 <th className="text-center">พื้นที่รับผิดชอบ</th>
                 <th className="text-center">ความสะอาด</th>
                 <th className="text-center">แก้วน้ำ</th>
-                <th className="text-center">คะแนนรวม</th>
-                <th className="text-center">ระดับ</th>
+                <th className="text-center">ระดับ (พื้นที่)</th>
+                <th className="text-center">ระดับ (ห้องเรียน)</th>
+                <th className="text-center">ระดับ (แก้วน้ำ)</th>
               </tr>
             </thead>
             <tbody>
@@ -197,10 +199,19 @@ export function ReportsView({ homerooms, classroomEvals, areaEvals, waterEvals, 
                   <td className="text-center text-sm">{r.area}%</td>
                   <td className="text-center text-sm">{r.classroom}%</td>
                   <td className="text-center text-sm">{r.water}%</td>
-                  <td className="text-center font-bold text-gray-900 dark:text-white">{r.total}%</td>
                   <td className="text-center">
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${r.gradeClass}`}>
-                      {r.grade}
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${r.gradeAreaClass}`}>
+                      {r.gradeArea}
+                    </span>
+                  </td>
+                  <td className="text-center">
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${r.gradeClassroomClass}`}>
+                      {r.gradeClassroom}
+                    </span>
+                  </td>
+                  <td className="text-center">
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${r.gradeWaterClass}`}>
+                      {r.gradeWater}
                     </span>
                   </td>
                 </tr>
