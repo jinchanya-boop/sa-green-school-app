@@ -179,10 +179,11 @@ export async function submitAreaEvaluation(formData: FormData) {
           homeroom.grade_level,
           "มีการประเมินพื้นที่รับผิดชอบใหม่",
           `รอการอนุมัติ: ประเมินพื้นที่รับผิดชอบของห้อง ${className}`,
-        "area_evaluation",
-        evalData.id,
-        "/area-evaluation/approvals"
-      );
+          "area_evaluation",
+          evalData.id,
+          "/area-evaluation/approvals"
+        );
+      }
     }
   }
 
