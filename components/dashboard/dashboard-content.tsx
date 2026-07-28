@@ -501,9 +501,9 @@ function StandardDashboardContent({
           <>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={progressData.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" vertical={false} />
-                <XAxis dataKey="period" tick={{ fontSize: 12, fontFamily: "Sarabun", fill: "currentColor" }} axisLine={false} tickLine={false} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: "currentColor" }} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#888888" strokeOpacity={0.2} vertical={false} />
+                <XAxis dataKey="period" tick={{ fontSize: 12, fontFamily: "Sarabun", fill: "#888888" }} axisLine={{ stroke: "#888888", strokeOpacity: 0.2 }} tickLine={false} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: "#888888" }} axisLine={{ stroke: "#888888", strokeOpacity: 0.2 }} tickLine={false} />
                 <Tooltip 
                   contentStyle={{ borderRadius: "12px", fontFamily: "Sarabun", fontSize: 13, border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)", background: "var(--background)", color: "var(--foreground)" }} 
                   cursor={{ fill: 'rgba(0,0,0,0.02)' }} 
