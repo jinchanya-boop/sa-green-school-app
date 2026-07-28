@@ -43,13 +43,13 @@ const navItems: NavItem[] = [
     href: "/area-evaluation",
     label: "ประเมินพื้นที่รับผิดชอบ",
     icon: MapPin,
-    roles: ["administrator", "director", "deputy_director", "grade_supervisor", "student_council", "class_representative"],
+    roles: ["administrator", "director", "deputy_director", "grade_supervisor", "student_council", "class_representative", "homeroom_teacher"],
   },
   {
     href: "/classroom-eval",
     label: "ประเมินความสะอาดห้องเรียน",
     icon: School,
-    roles: ["administrator", "director", "deputy_director", "building_supervisor", "student_council", "class_representative"],
+    roles: ["administrator", "director", "deputy_director", "building_supervisor", "student_council", "class_representative", "homeroom_teacher"],
   },
   {
     href: "/water-bottle",
@@ -67,6 +67,13 @@ const navItems: NavItem[] = [
     href: "/certificates",
     label: "เกียรติบัตร",
     icon: Award,
+  },
+  {
+    href: "/certificate-center",
+    label: "ศูนย์เกียรติบัตร",
+    icon: Award,
+    roles: ["administrator", "director", "deputy_director", "building_supervisor", "grade_supervisor"],
+    badge: "NEW",
   },
   {
     href: "/rankings",
@@ -113,9 +120,13 @@ export function Sidebar({ collapsed, mobileOpen, onMobileClose, profile }: Sideb
 
   const userRoles = new Set<string>();
   if (profile?.role) userRoles.add(profile.role);
-  if (profile?.grade_level) userRoles.add("grade_supervisor");
-  if (profile?.building_id) userRoles.add("building_supervisor");
-  if (profile?.homeroom_id) userRoles.add("homeroom_teacher");
+  
+  // Do not grant teacher privileges to any student roles based on their class/grade metadata
+  if (profile?.role && !["student", "class_representative", "student_council"].includes(profile.role)) {
+    if (profile?.grade_level) userRoles.add("grade_supervisor");
+    if (profile?.building_id) userRoles.add("building_supervisor");
+    if (profile?.homeroom_id) userRoles.add("homeroom_teacher");
+  }
 
   const filteredNavItems = navItems.filter(
     (item) => !item.roles || item.roles.some(r => userRoles.has(r))

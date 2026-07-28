@@ -51,7 +51,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="th" suppressHydrationWarning className={sarabun.variable}>
-      <body className={sarabun.className}>
+      <body className={sarabun.className} suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

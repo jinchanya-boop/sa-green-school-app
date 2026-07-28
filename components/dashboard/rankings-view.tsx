@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Trophy, TrendingUp, TrendingDown, Minus, Droplets, Calendar, Star, MapPin, School } from "lucide-react";
+import { Trophy, TrendingUp, TrendingDown, Minus, Droplets, Calendar, Star, MapPin, School, Medal } from "lucide-react";
 import { formatPercent, GRADE_BG } from "@/lib/utils";
+import { Confetti } from "@/components/ui/confetti";
 
 interface RankingsViewProps {
   homerooms: any[];
@@ -136,27 +137,45 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
   const theme = getTabColors(activeTab);
   const Icon = theme.icon;
 
+  // Helper for generating deterministic colors/avatars based on string ID
+  const getAvatarAndColor = (id: string, rank: number) => {
+    const hash = id.split("").reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
+    const colors = [
+      "from-rose-400 to-red-500", "from-pink-400 to-fuchsia-500", "from-purple-400 to-indigo-500",
+      "from-blue-400 to-cyan-500", "from-teal-400 to-emerald-500", "from-green-400 to-lime-500",
+      "from-orange-400 to-amber-500"
+    ];
+    const avatars = ["🦊", "🐼", "🐯", "🦁", "🐰", "🐨", "🐶", "🐱", "🐸", "🐧"];
+    return {
+      color: rank === 1 ? "from-yellow-300 to-yellow-500" : rank === 2 ? "from-slate-300 to-slate-400" : rank === 3 ? "from-orange-300 to-orange-500" : colors[Math.abs(hash) % colors.length],
+      avatar: avatars[Math.abs(hash) % avatars.length]
+    };
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="space-y-6"
+      className="space-y-6 pb-20 relative"
     >
+      {/* Confetti effect when data is loaded and there are rankings */}
+      {displayData.length > 0 && <Confetti count={40} />}
+
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${theme.bgIcon}`}>
-            <Icon className="w-5 h-5" />
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${theme.bgIcon}`}>
+            <Trophy className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">การจัดอันดับ</h1>
-            <p className="text-gray-400 text-sm">
-              {`${theme.title} — ประจำเดือน`}
+            <h1 className="text-2xl font-black text-gray-900 dark:text-white">หอเกียรติยศ (Leaderboard)</h1>
+            <p className="text-gray-500 font-medium text-sm">
+              {`${theme.title} — ศึกประชันความเป็นเลิศแห่งเดือน`}
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap bg-gray-100 dark:bg-gray-800 p-1 rounded-xl w-full xl:w-auto overflow-x-auto gap-1">
+        <div className="flex flex-wrap bg-gray-100 dark:bg-gray-800 p-1.5 rounded-2xl w-full xl:w-auto overflow-x-auto gap-1 shadow-inner">
           {(["area", "classroom", "water"] as TabType[]).map((tab) => {
             const isTabActive = activeTab === tab;
             const tabTheme = getTabColors(tab);
@@ -165,8 +184,8 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 sm:flex-none px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 whitespace-nowrap ${
-                  isTabActive ? `bg-white dark:bg-gray-700 ${tabTheme.activeBtn} shadow-sm` : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                className={`flex-1 sm:flex-none px-5 py-2.5 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
+                  isTabActive ? `bg-white dark:bg-gray-700 ${tabTheme.activeBtn} shadow-md scale-105` : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                 }`}
               >
                 <TabIcon className="w-4 h-4" />
@@ -178,143 +197,156 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
       </div>
 
       <div className="flex flex-col sm:flex-row items-center gap-4">
-        <div className="flex items-center gap-2 bg-white dark:bg-gray-900 p-3 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm w-full sm:max-w-sm">
-          <Calendar className="w-4 h-4 text-gray-400" />
-          <span className="text-sm text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap">ประจำเดือน:</span>
+        <div className="flex items-center gap-3 bg-white dark:bg-gray-900 p-3 rounded-2xl border-2 border-gray-100 dark:border-gray-800 shadow-sm w-full sm:max-w-sm focus-within:border-blue-500 transition-colors">
+          <Calendar className="w-5 h-5 text-blue-500" />
+          <span className="text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap">ประจำเดือน:</span>
           <select 
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="w-full bg-gray-50 dark:bg-gray-800 border-none text-sm rounded-lg focus:ring-0 cursor-pointer text-gray-900 dark:text-white"
+            className="w-full bg-transparent border-none text-sm font-bold focus:ring-0 cursor-pointer text-gray-900 dark:text-white"
           >
             {availableMonths.map(m => {
               const d = new Date(m + "-01");
               const label = d.toLocaleDateString("th-TH", { month: 'long', year: 'numeric' });
-              return <option key={m} value={m}>{label}</option>
+              return <option key={m} value={m} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">{label}</option>
             })}
           </select>
         </div>
 
-        <div className="flex items-center gap-2 bg-white dark:bg-gray-900 p-3 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm w-full sm:max-w-xs">
-          <School className="w-4 h-4 text-gray-400" />
-          <span className="text-sm text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap">ระดับชั้น:</span>
+        <div className="flex items-center gap-3 bg-white dark:bg-gray-900 p-3 rounded-2xl border-2 border-gray-100 dark:border-gray-800 shadow-sm w-full sm:max-w-xs focus-within:border-purple-500 transition-colors">
+          <School className="w-5 h-5 text-purple-500" />
+          <span className="text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap">ระดับชั้น:</span>
           <select 
             value={rankingGroup}
             onChange={(e) => setRankingGroup(e.target.value as "junior" | "senior")}
-            className="w-full bg-gray-50 dark:bg-gray-800 border-none text-sm rounded-lg focus:ring-0 cursor-pointer text-gray-900 dark:text-white"
+            className="w-full bg-transparent border-none text-sm font-bold focus:ring-0 cursor-pointer text-gray-900 dark:text-white"
           >
-            <option value="junior">ม.ต้น (ม.1 - ม.3)</option>
-            <option value="senior">ม.ปลาย (ม.4 - ม.6)</option>
+            <option value="junior" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">ระดับ ม.ต้น (Junior)</option>
+            <option value="senior" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">ระดับ ม.ปลาย (Senior)</option>
           </select>
         </div>
       </div>
 
-      {/* Podium */}
+      {/* Game-style Podium */}
       {displayData.length > 0 ? (
-        <div className="grid grid-cols-3 gap-2 sm:gap-4 max-w-lg mx-auto">
+        <div className="flex justify-center items-end h-[320px] gap-2 sm:gap-6 pt-10 mb-12">
+          
+          {/* Silver - 2nd Place */}
           {displayData[1] && (
-            <div className="flex flex-col items-center pt-6">
-              <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold text-lg mb-2">
-                2
+            <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="w-[30%] sm:w-[25%] max-w-[140px] flex flex-col items-center">
+              <div className="relative mb-2 w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-slate-200 to-slate-400 rounded-full border-4 border-white dark:border-gray-800 shadow-lg flex items-center justify-center text-3xl sm:text-4xl z-10">
+                {getAvatarAndColor((displayData[1] as any).id, 2).avatar}
+                <div className="absolute -bottom-3 bg-slate-500 text-white text-xs font-black px-2 py-0.5 rounded-full shadow border-2 border-white">2nd</div>
               </div>
-              <div className={`w-full rounded-t-2xl p-2 sm:p-3 text-center h-20 flex flex-col justify-center ${theme.bgIcon.split(' ')[0]}/40 dark:bg-gray-800 border border-gray-200 dark:border-gray-700`}>
-                <p className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white line-clamp-1">{(displayData[1] as any).class}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatPercent((displayData[1] as any).avgPercentage)}
-                </p>
+              <div className="w-full h-[140px] bg-gradient-to-t from-slate-400 to-slate-300 rounded-t-[20px] sm:rounded-t-[32px] shadow-2xl flex flex-col items-center p-3 relative overflow-hidden">
+                <div className="absolute inset-0 bg-white/20" />
+                <p className="font-black text-xs sm:text-sm text-slate-900 z-10 text-center">{(displayData[1] as any).class}</p>
+                <p className="font-black text-white text-sm sm:text-lg z-10 mt-1 drop-shadow-md">{formatPercent((displayData[1] as any).avgPercentage)}</p>
               </div>
-            </div>
+            </motion.div>
           )}
-          
+
+          {/* Gold - 1st Place */}
           {displayData[0] && (
-            <div className="flex flex-col items-center">
-              <Icon className={`w-7 h-7 mb-1 ${theme.text}`} />
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg mb-2 ${theme.bgIcon}`}>
-                1
+            <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4, type: "spring" }} className="w-[35%] sm:w-[30%] max-w-[160px] flex flex-col items-center">
+              <motion.div 
+                animate={{ y: [0, -10, 0] }} 
+                transition={{ repeat: Infinity, duration: 2 }}
+                className="mb-1 z-20"
+              >
+                <Medal className="w-10 h-10 text-yellow-400 fill-yellow-400 drop-shadow-lg" />
+              </motion.div>
+              <div className="relative mb-2 w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-yellow-300 to-amber-500 rounded-full border-4 border-white dark:border-gray-800 shadow-xl flex items-center justify-center text-4xl sm:text-5xl z-10">
+                {getAvatarAndColor((displayData[0] as any).id, 1).avatar}
+                <div className="absolute -bottom-4 bg-amber-500 text-white text-sm font-black px-3 py-1 rounded-full shadow-lg border-2 border-white">1st</div>
               </div>
-              <div className={`w-full border-2 rounded-t-2xl p-2 sm:p-3 text-center h-28 flex flex-col justify-center bg-white dark:bg-gray-900 shadow-md ${theme.border} ${theme.shadow}`}>
-                <p className={`font-bold text-xs sm:text-sm line-clamp-1 ${theme.text}`}>
-                  {(displayData[0] as any).class}
-                </p>
-                <p className={`text-xs font-semibold mt-0.5 ${theme.text}`}>
-                  {formatPercent((displayData[0] as any).avgPercentage)}
-                </p>
+              <div className="w-full h-[180px] bg-gradient-to-t from-amber-500 to-yellow-400 rounded-t-[24px] sm:rounded-t-[40px] shadow-2xl flex flex-col items-center p-3 sm:p-4 relative overflow-hidden">
+                <div className="absolute inset-0 bg-white/30 animate-[shimmer_2s_infinite]" />
+                <p className="font-black text-sm sm:text-base text-amber-950 z-10 text-center">{(displayData[0] as any).class}</p>
+                <p className="font-black text-white text-base sm:text-2xl z-10 mt-1 drop-shadow-md">{formatPercent((displayData[0] as any).avgPercentage)}</p>
+                <div className="mt-auto z-10">
+                  <Star className="w-5 h-5 text-white/50 fill-white/50" />
+                </div>
               </div>
-            </div>
+            </motion.div>
           )}
-          
+
+          {/* Bronze - 3rd Place */}
           {displayData[2] && (
-            <div className="flex flex-col items-center pt-10">
-              <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center text-orange-700 dark:text-orange-300 font-bold text-lg mb-2">
-                3
+            <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0 }} className="w-[30%] sm:w-[25%] max-w-[140px] flex flex-col items-center">
+              <div className="relative mb-2 w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-orange-300 to-orange-500 rounded-full border-4 border-white dark:border-gray-800 shadow-lg flex items-center justify-center text-3xl sm:text-4xl z-10">
+                {getAvatarAndColor((displayData[2] as any).id, 3).avatar}
+                <div className="absolute -bottom-3 bg-orange-600 text-white text-xs font-black px-2 py-0.5 rounded-full shadow border-2 border-white">3rd</div>
               </div>
-              <div className={`w-full rounded-t-2xl p-2 sm:p-3 text-center h-16 flex flex-col justify-center bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700`}>
-                <p className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white line-clamp-1">{(displayData[2] as any).class}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatPercent((displayData[2] as any).avgPercentage)}
-                </p>
+              <div className="w-full h-[110px] bg-gradient-to-t from-orange-500 to-orange-400 rounded-t-[20px] sm:rounded-t-[32px] shadow-2xl flex flex-col items-center p-3 relative overflow-hidden">
+                <div className="absolute inset-0 bg-white/10" />
+                <p className="font-black text-xs sm:text-sm text-orange-950 z-10 text-center">{(displayData[2] as any).class}</p>
+                <p className="font-black text-white text-sm sm:text-lg z-10 mt-1 drop-shadow-md">{formatPercent((displayData[2] as any).avgPercentage)}</p>
               </div>
-            </div>
+            </motion.div>
           )}
+
         </div>
       ) : (
-        <div className="py-12 text-center text-gray-500">ไม่พบข้อมูลการประเมินในรอบเวลานี้</div>
+        <div className="py-20 text-center">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full mb-4">
+            <Trophy className="w-10 h-10 text-gray-300 dark:text-gray-600" />
+          </div>
+          <p className="text-gray-500 font-bold">ยังไม่มีข้อมูลสำหรับการจัดอันดับในเดือนนี้</p>
+        </div>
       )}
 
-      {/* Table */}
-      {displayData.length > 0 && (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th className="text-center w-14">อันดับ</th>
-                  <th className="text-left">ห้องเรียน</th>
-                  <th className="text-left hidden sm:table-cell">อาคาร</th>
-                  
-                      <th className="text-center hidden md:table-cell">ตรวจ (ครั้ง)</th>
-                      <th className="text-center">สัปดาห์ 1</th>
-                      <th className="text-center">สัปดาห์ 2</th>
-                      <th className="text-center">สัปดาห์ 3</th>
-                      <th className="text-center">สัปดาห์ 4</th>
-                      <th className={`text-center font-bold ${theme.text}`}>เฉลี่ยเดือนนี้</th>
-                  <th className="text-center">แนวโน้ม</th>
-                </tr>
-              </thead>
-              <tbody>
-                {displayData.map((r: any) => (
-                  <tr key={r.rank} className={r.rank <= 3 ? "bg-gray-50/50 dark:bg-gray-800/30" : ""}>
-                    <td className="text-center">
-                      <span className={`w-7 h-7 inline-flex items-center justify-center rounded-lg font-bold text-sm ${
-                        r.rank === 1 ? theme.bgIcon :
-                        r.rank === 2 ? "bg-slate-100 text-slate-600" :
-                        r.rank === 3 ? "bg-orange-100 text-orange-700" :
-                        "text-gray-500"
-                      }`}>
-                        {r.rank}
-                      </span>
-                    </td>
-                    <td className="font-semibold text-gray-900 dark:text-white text-sm whitespace-nowrap">{r.class}</td>
-                    <td className="text-sm text-gray-500 hidden sm:table-cell">{r.building}</td>
-                    
-                        <td className="text-center text-sm text-gray-500 hidden md:table-cell">{r.totalChecks}</td>
-                        <td className="text-center text-sm text-gray-500">{r.weekly[0] !== null ? formatPercent(r.weekly[0]) : '-'}</td>
-                        <td className="text-center text-sm text-gray-500">{r.weekly[1] !== null ? formatPercent(r.weekly[1]) : '-'}</td>
-                        <td className="text-center text-sm text-gray-500">{r.weekly[2] !== null ? formatPercent(r.weekly[2]) : '-'}</td>
-                        <td className="text-center text-sm text-gray-500">{r.weekly[3] !== null ? formatPercent(r.weekly[3]) : '-'}</td>
-                        <td className="text-center">
-                          <span className={`font-bold ${theme.text}`}>{formatPercent(r.avgPercentage)}</span>
-                        </td>
-                    
-                    <td className="text-center">
-                      {r.trend === "up" ? <TrendingUp className="w-4 h-4 text-green-500 mx-auto" /> :
-                       r.trend === "down" ? <TrendingDown className="w-4 h-4 text-red-500 mx-auto" /> :
-                       <Minus className="w-4 h-4 text-gray-300 dark:text-gray-600 mx-auto" />}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      {/* Friendly Card Layout (Rank 4+) */}
+      {displayData.length > 3 && (
+        <div className="space-y-3 mt-4">
+          <h3 className="font-black text-gray-900 dark:text-white mb-4 px-2">นักสู้รักษ์โลกอันดับอื่นๆ (Challengers)</h3>
+          {displayData.slice(3).map((r: any) => {
+            const styleInfo = getAvatarAndColor(r.id, r.rank);
+            return (
+              <motion.div 
+                key={r.rank} 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 * (r.rank - 3) }}
+                className="flex items-center gap-4 bg-white dark:bg-gray-900 p-4 rounded-3xl border-2 border-gray-100 dark:border-gray-800 shadow-sm hover:border-gray-300 dark:hover:border-gray-600 transition-all group"
+              >
+                <div className="font-black text-gray-400 dark:text-gray-500 text-xl w-8 text-center">
+                  #{r.rank}
+                </div>
+                
+                <div className={`w-12 h-12 rounded-[18px] bg-gradient-to-br ${styleInfo.color} flex items-center justify-center text-2xl shadow-md border-2 border-white/50 group-hover:scale-110 transition-transform`}>
+                  {styleInfo.avatar}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-gray-900 dark:text-white text-base sm:text-lg truncate">
+                    {r.class}
+                  </p>
+                  <div className="flex items-center gap-3 mt-1">
+                    <p className="text-xs text-gray-500 hidden sm:inline-flex items-center gap-1">
+                      <MapPin className="w-3 h-3" /> {r.building}
+                    </p>
+                    <div className="flex gap-1">
+                      {[0, 1, 2, 3].map(w => (
+                        <div key={w} className={`w-2 h-2 rounded-full ${r.weekly[w] !== null ? 'bg-green-400' : 'bg-gray-200 dark:bg-gray-700'}`} title={`สัปดาห์ ${w+1}`} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <p className="font-black text-xl text-gray-900 dark:text-white group-hover:text-blue-500 transition-colors">
+                    {formatPercent(r.avgPercentage)}
+                  </p>
+                  <div className="flex justify-end items-center mt-1">
+                    {r.trend === "up" ? <TrendingUp className="w-4 h-4 text-green-500" /> :
+                     r.trend === "down" ? <TrendingDown className="w-4 h-4 text-red-500" /> :
+                     <Minus className="w-4 h-4 text-gray-400" />}
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       )}
     </motion.div>

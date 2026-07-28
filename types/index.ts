@@ -446,3 +446,59 @@ export interface ApiError {
 }
 
 export type Theme = "light" | "dark" | "system";
+
+// ── New Module: Certificate Center ────────────────────────────
+
+export interface CertCenterTemplate {
+  id: string;
+  name: string;
+  background_url: string;
+  layout_config: Record<string, any>;
+  created_at: string;
+}
+
+export interface CertCenterCertificate {
+  id: string;
+  certificate_number: string;
+  student_id: string;
+  template_id: string;
+  award_type: string;
+  academic_year: string;
+  semester: string;
+  qr_code_data: string;
+  pdf_url?: string;
+  issued_by: string;
+  issued_at: string;
+  
+  // Views/Joins
+  student?: Student;
+  template?: CertCenterTemplate;
+  issuer?: Profile;
+}
+
+export interface CertCenterNumber {
+  id: string;
+  certificate_number: string;
+  academic_year: string;
+  status: "Available" | "Used";
+  issued_at?: string;
+  issued_by?: string;
+  student_id?: string;
+  certificate_id?: string;
+  created_at: string;
+  
+  // Views/Joins
+  issuer?: Profile;
+  student?: Student;
+  certificate?: CertCenterCertificate;
+}
+
+export interface CertCenterLog {
+  id: string;
+  action: string;
+  certificate_number?: string;
+  student_id?: string;
+  issued_by?: string;
+  details?: string;
+  created_at: string;
+}

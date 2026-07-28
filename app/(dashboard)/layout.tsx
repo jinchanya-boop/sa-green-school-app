@@ -12,16 +12,30 @@ export default async function DashboardLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  const isDev = process.env.NODE_ENV === "development";
+
+  if (!user && !isDev) {
     redirect("/login");
   }
 
   // Fetch profile
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
+  let profile = null;
+  if (user) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+    profile = data;
+    profile = data;
+  } else if (isDev) {
+    // Fake profile for unauthenticated user in dev
+    profile = { 
+      id: "dev-bypass", 
+      full_name: "แอดมิน (โหมดจำลอง)", 
+      role: "administrator" 
+    };
+  }
 
   return <DashboardShell profile={profile}>{children}</DashboardShell>;
 }

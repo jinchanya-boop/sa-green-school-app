@@ -202,6 +202,7 @@ export default async function DashboardPage() {
         water: todayWater ?? []
       }}
       evaluationRounds={evaluationRounds}
+      profile={profile}
     />
   );
 }

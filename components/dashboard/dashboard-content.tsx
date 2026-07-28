@@ -35,6 +35,8 @@ import {
 import { GRADE_COLORS, formatPercent } from "@/lib/utils";
 import { formatDistanceToNow, getWeek } from "date-fns";
 import { th } from "date-fns/locale";
+import { StatCard } from "./stat-card";
+import { StudentGamifiedDashboard } from "./student-gamified-dashboard";
 
 interface DashboardContentProps {
   totalEvals: number;
@@ -50,6 +52,7 @@ interface DashboardContentProps {
     water: any[];
   };
   evaluationRounds?: any[];
+  profile?: any;
 }
 
 const containerVariants: Variants = {
@@ -82,7 +85,14 @@ const GRADE_LABEL_MAP: Record<string, string> = {
 
 const COLORS = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316", "#6366f1", "#84cc16"];
 
-export function DashboardContent({
+export function DashboardContent(props: DashboardContentProps) {
+  if (props.profile?.role === "class_representative") {
+    return <StudentGamifiedDashboard {...props} />;
+  }
+  return <StandardDashboardContent {...props} />;
+}
+
+function StandardDashboardContent({
   totalEvals,
   areaStats,
   classroomStats,
@@ -117,7 +127,8 @@ export function DashboardContent({
       value: totalEvals.toLocaleString("th-TH"),
       icon: CheckCircle2,
       color: "text-green-600",
-      bg: "bg-green-50 dark:bg-green-950",
+      gradientFrom: "from-green-400",
+      gradientTo: "to-emerald-600",
       trend: "+12%",
     },
     {
@@ -125,7 +136,8 @@ export function DashboardContent({
       value: formatPercent(avgArea),
       icon: MapPin,
       color: "text-blue-600",
-      bg: "bg-blue-50 dark:bg-blue-950",
+      gradientFrom: "from-sky-400",
+      gradientTo: "to-blue-600",
       trend: "+5%",
     },
     {
@@ -133,7 +145,8 @@ export function DashboardContent({
       value: formatPercent(avgClass),
       icon: School,
       color: "text-purple-600",
-      bg: "bg-purple-50 dark:bg-purple-950",
+      gradientFrom: "from-purple-400",
+      gradientTo: "to-fuchsia-600",
       trend: "+3%",
     },
     {
@@ -141,7 +154,8 @@ export function DashboardContent({
       value: formatPercent(avgWater),
       icon: Droplets,
       color: "text-cyan-600",
-      bg: "bg-cyan-50 dark:bg-cyan-950",
+      gradientFrom: "from-cyan-400",
+      gradientTo: "to-blue-500",
       trend: "+8%",
     },
   ];
@@ -398,33 +412,19 @@ export function DashboardContent({
         variants={itemVariants}
         className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4"
       >
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <div
-              key={stat.label}
-              className="stat-card bg-white dark:bg-gray-900 group cursor-default"
-            >
-              <div className="flex items-start justify-between">
-                <div className={`p-2.5 rounded-xl ${stat.bg}`}>
-                  <Icon className={`w-5 h-5 ${stat.color}`} />
-                </div>
-                <span className="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400">
-                  <TrendingUp className="w-3 h-3" />
-                  {stat.trend}
-                </span>
-              </div>
-              <div className="mt-4">
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {stat.value}
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                  {stat.label}
-                </p>
-              </div>
-            </div>
-          );
-        })}
+        {stats.map((stat, idx) => (
+          <StatCard
+            key={stat.label}
+            label={stat.label}
+            value={stat.value}
+            icon={stat.icon}
+            color={stat.color}
+            gradientFrom={stat.gradientFrom}
+            gradientTo={stat.gradientTo}
+            trend={stat.trend}
+            delay={idx * 0.1}
+          />
+        ))}
       </motion.div>
 
       {/* Monthly Progress Trends */}
@@ -500,25 +500,25 @@ export function DashboardContent({
         {progressData.chartData.length > 0 ? (
           <>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={progressData.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={progressData.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" vertical={false} />
                 <XAxis dataKey="period" tick={{ fontSize: 12, fontFamily: "Sarabun", fill: "currentColor" }} axisLine={false} tickLine={false} />
                 <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: "currentColor" }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ borderRadius: "12px", fontFamily: "Sarabun", fontSize: 13, border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)", background: "var(--background)", color: "var(--foreground)" }} />
+                <Tooltip 
+                  contentStyle={{ borderRadius: "12px", fontFamily: "Sarabun", fontSize: 13, border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)", background: "var(--background)", color: "var(--foreground)" }} 
+                  cursor={{ fill: 'rgba(0,0,0,0.02)' }} 
+                />
                 <Legend wrapperStyle={{ fontFamily: "Sarabun", fontSize: 12, paddingTop: "20px", color: "currentColor" }} />
                 {progressData.filteredHomerooms.map((hr, idx) => (
-                  <Line 
+                  <Bar 
                     key={hr.id}
-                    type="monotone"
                     dataKey={hr.class_name}
-                    stroke={COLORS[idx % COLORS.length]}
-                    strokeWidth={2}
-                    dot={{ r: 4, strokeWidth: 2 }}
-                    activeDot={{ r: 6 }}
-                    connectNulls
+                    fill={COLORS[idx % COLORS.length]}
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={40}
                   />
                 ))}
-              </LineChart>
+              </BarChart>
             </ResponsiveContainer>
             
             {/* Progress Matrix Table */}
@@ -568,7 +568,7 @@ export function DashboardContent({
           </>
         ) : (
           <div className="flex flex-col items-center justify-center h-48 text-gray-400 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-xl">
-            <LineChart className="w-8 h-8 mb-2 opacity-30" />
+            <TrendingUp className="w-8 h-8 mb-2 opacity-30" />
             <p className="text-sm">ยังไม่มีข้อมูลสำหรับพล็อตกราฟ</p>
           </div>
         )}
@@ -579,14 +579,15 @@ export function DashboardContent({
         variants={itemVariants}
         className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-6"
       >
-        <div className="flex items-center justify-between mb-6">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-purple-100/50 to-transparent rounded-full -mr-20 -mt-20 blur-3xl pointer-events-none" />
+        <div className="flex items-center justify-between mb-6 relative z-10">
           <div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <Clock className="w-5 h-5 text-purple-500" />
-              ติดตามสถานะการส่งรายงานวันนี้
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Star className="w-6 h-6 text-amber-500 fill-amber-500" />
+              ภารกิจประจำวัน (Daily Quests)
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              แสดงผลเรียลไทม์ว่าห้องไหนส่งรายงานของวันนี้แล้วบ้าง (ไม่ได้คิดเป็นคะแนน)
+              ทำภารกิจให้ครบเพื่อรักษาสิ่งแวดล้อมโรงเรียนของเรา! 🌍
             </p>
           </div>
           <select
@@ -619,38 +620,42 @@ export function DashboardContent({
                 const hasClass = checkSubmission("classroom", hr.id);
                 const hasWater = checkSubmission("water", hr.id);
                 return (
-                  <tr key={hr.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                  <motion.tr 
+                    whileHover={{ scale: 1.01 }}
+                    key={hr.id} 
+                    className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group cursor-default"
+                  >
+                    <td className="px-4 py-3 font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 transition-colors">
                       {hr.class_name}
                     </td>
                     <td className="px-4 py-3 text-center">
                       {hasArea ? (
-                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-600 mx-auto" title="ส่งแล้ว">
-                          <CheckCircle2 className="w-4 h-4" />
-                        </span>
+                        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600 mx-auto shadow-sm" title="ส่งแล้ว">
+                          <CheckCircle2 className="w-5 h-5" />
+                        </motion.span>
                       ) : (
-                        <span className="inline-block w-2 h-2 rounded-full bg-gray-200 dark:bg-gray-700" title="ยังไม่ส่ง" />
+                        <span className="inline-block w-3 h-3 rounded-full bg-gray-200 dark:bg-gray-700" title="ยังไม่ส่ง" />
                       )}
                     </td>
                     <td className="px-4 py-3 text-center">
                       {hasClass ? (
-                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-600 mx-auto" title="ส่งแล้ว">
-                          <CheckCircle2 className="w-4 h-4" />
-                        </span>
+                        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 mx-auto shadow-sm" title="ส่งแล้ว">
+                          <CheckCircle2 className="w-5 h-5" />
+                        </motion.span>
                       ) : (
-                        <span className="inline-block w-2 h-2 rounded-full bg-gray-200 dark:bg-gray-700" title="ยังไม่ส่ง" />
+                        <span className="inline-block w-3 h-3 rounded-full bg-gray-200 dark:bg-gray-700" title="ยังไม่ส่ง" />
                       )}
                     </td>
                     <td className="px-4 py-3 text-center">
                       {hasWater ? (
-                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-600 mx-auto" title="ส่งแล้ว">
-                          <CheckCircle2 className="w-4 h-4" />
-                        </span>
+                        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-cyan-100 text-cyan-600 mx-auto shadow-sm" title="ส่งแล้ว">
+                          <CheckCircle2 className="w-5 h-5" />
+                        </motion.span>
                       ) : (
-                        <span className="inline-block w-2 h-2 rounded-full bg-gray-200 dark:bg-gray-700" title="ยังไม่ส่ง" />
+                        <span className="inline-block w-3 h-3 rounded-full bg-gray-200 dark:bg-gray-700" title="ยังไม่ส่ง" />
                       )}
                     </td>
-                  </tr>
+                  </motion.tr>
                 );
               })}
             </tbody>
@@ -743,8 +748,11 @@ export function DashboardContent({
         <div className="stat-card flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="font-semibold text-gray-900 dark:text-white">แชมป์สุดยอดห้องเรียน</h2>
-              <p className="text-xs text-gray-400 mt-0.5">คะแนนสะสมรวมสูงสุด (Overall)</p>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Trophy className="w-6 h-6 text-amber-500 fill-amber-500" />
+                แชมป์สุดยอดห้องเรียน
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">คะแนนรวมสูงสุด (Hall of Fame) 🏆</p>
             </div>
             <div className="flex items-center gap-2">
               <select 
@@ -767,34 +775,39 @@ export function DashboardContent({
               filteredRankings.slice(0, 5).map((r, i) => {
                 const rank = i + 1;
                 return (
-                  <div key={r.id} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border border-transparent hover:border-gray-100 dark:hover:border-gray-700">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0 ${
-                      rank === 1 ? "bg-amber-100 text-amber-700" :
-                      rank === 2 ? "bg-slate-100 text-slate-600" :
-                      rank === 3 ? "bg-orange-100 text-orange-700" :
+                  <motion.div whileHover={{ scale: 1.02 }} key={r.id} className="flex items-center gap-4 p-3 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all cursor-default relative overflow-hidden">
+                    <div className={`w-12 h-12 rounded-[16px] flex items-center justify-center text-lg font-black flex-shrink-0 shadow-sm z-10 ${
+                      rank === 1 ? "bg-gradient-to-br from-amber-300 to-amber-500 text-white" :
+                      rank === 2 ? "bg-gradient-to-br from-slate-300 to-slate-500 text-white" :
+                      rank === 3 ? "bg-gradient-to-br from-orange-300 to-orange-500 text-white" :
                       "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
                     }`}>
                       {rank}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 dark:text-white text-sm">{r.homeroom?.class_name ?? "—"}</p>
-                      <p className="text-xs text-gray-400">{r.homeroom?.buildings?.name ?? "—"}</p>
+                    <div className="flex-1 min-w-0 z-10">
+                      <p className="font-bold text-gray-900 dark:text-white text-base">{r.homeroom?.class_name ?? "—"}</p>
+                      <p className="text-xs text-gray-500 font-medium">{r.homeroom?.buildings?.name ?? "—"}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-gray-900 dark:text-white text-sm">
+                    <div className="text-right z-10 flex flex-col items-end gap-1">
+                      <p className="font-black text-gray-900 dark:text-white text-lg drop-shadow-sm">
                         {formatPercent(r.total_score)}
                       </p>
                       {r.grade && (
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
-                          r.grade === "gold" ? "badge-gold" :
-                          r.grade === "silver" ? "badge-silver" :
-                          r.grade === "bronze" ? "badge-bronze" : "bg-gray-100 text-gray-500"
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm ${
+                          r.grade === "gold" ? "bg-gradient-to-r from-amber-400 to-amber-500 text-white" :
+                          r.grade === "silver" ? "bg-gradient-to-r from-slate-400 to-slate-500 text-white" :
+                          r.grade === "bronze" ? "bg-gradient-to-r from-orange-400 to-orange-500 text-white" : "bg-gray-100 text-gray-500"
                         }`}>
                           {GRADE_LABEL_MAP[r.grade] ?? r.grade}
                         </span>
                       )}
                     </div>
-                  </div>
+                    {rank <= 3 && (
+                      <div className={`absolute -right-4 -top-4 w-20 h-20 rounded-full opacity-10 blur-xl pointer-events-none ${
+                        rank === 1 ? "bg-amber-500" : rank === 2 ? "bg-slate-500" : "bg-orange-500"
+                      }`} />
+                    )}
+                  </motion.div>
                 );
               })
             )}

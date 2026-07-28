@@ -190,19 +190,14 @@ h1, h2, h3, h4, h5, h6 {
 /* ── Stat Card ───────────────────────────────────────────────── */
 @layer components {
   .stat-card {
+    @apply bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800;
     border-radius: var(--radius);
     padding: 1.5rem;
-    background-color: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
+    border-width: 1px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     transition: box-shadow 0.2s, transform 0.2s;
   }
   
-  .dark .stat-card {
-    background-color: hsl(var(--card));
-    border-color: hsl(var(--border));
-  }
-
   .stat-card:hover {
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
     transform: translateY(-2px);
@@ -247,26 +242,27 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ── Table ───────────────────────────────────────────────────── */
-.data-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-.data-table th {
-  background: hsl(var(--muted));
-  font-weight: 600;
-  font-size: 0.8125rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: hsl(var(--muted-foreground));
-  padding: 0.75rem 1rem;
-}
-.data-table td {
-  padding: 0.875rem 1rem;
-  border-bottom: 1px solid hsl(var(--border));
-}
-.data-table tbody tr:hover {
-  background: hsl(var(--muted) / 0.5);
+@layer components {
+  .data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  .data-table th {
+    @apply bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400;
+    font-weight: 600;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.75rem 1rem;
+  }
+  .data-table td {
+    @apply text-gray-900 dark:text-gray-100 border-b border-gray-100 dark:border-gray-800;
+    padding: 0.875rem 1rem;
+  }
+  .data-table tbody tr:hover td {
+    @apply bg-gray-50 dark:bg-gray-800/50;
+  }
 }
 
 /* ── Focus Visible ───────────────────────────────────────────── */
