@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
-import { notifyGradeHead } from "@/lib/notifications";
+import { notifyGradeHead, notifyUser, notifyStudentCouncil } from "@/lib/notifications";
 
 export async function submitAreaEvaluation(formData: FormData) {
   const supabase = await createClient();
@@ -66,6 +66,8 @@ export async function submitAreaEvaluation(formData: FormData) {
     return { success: false, error: "มีการประเมินในพื้นที่นี้สำหรับวันที่เลือกไปแล้ว" };
   }
 
+  console.log("[submitAreaEvaluation] Start", { responsible_area_id, semester_id, isReporter });
+
   // Calculate totals
   let total_score = 0;
   let max_score = 0;
@@ -84,6 +86,7 @@ export async function submitAreaEvaluation(formData: FormData) {
   });
 
   // 1. Insert into area_evaluations
+  console.log("[submitAreaEvaluation] Inserting to area_evaluations", { total_score, max_score, status });
   const { data: evalData, error: evalError } = await supabase
     .from("area_evaluations")
     .insert({
@@ -127,58 +130,104 @@ export async function submitAreaEvaluation(formData: FormData) {
   const uploadPromises: Promise<void>[] = [];
 
   const uploadPhoto = async (file: File, category: string) => {
-    if (!file || file.size === 0) return;
+    console.log(`[submitAreaEvaluation] Uploading ${category}`);
+    if (!file || file.size === 0) {
+      console.log(`[submitAreaEvaluation] No file for ${category}`);
+      return;
+    }
     const ext = file.name.split('.').pop();
     const filePath = `${evalData.id}/${category}_${Date.now()}.${ext}`;
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from("evaluation-photos")
-      .upload(filePath, file);
-
-    if (!uploadError && uploadData) {
-      const { data: { publicUrl } } = supabase.storage
+    try {
+      console.log(`[submitAreaEvaluation] Converting to buffer ${category}`);
+      const buffer = Buffer.from(await file.arrayBuffer());
+      console.log(`[submitAreaEvaluation] Uploading to supabase ${category}`);
+      const { data: uploadData, error: uploadError } = await adminClient.storage
         .from("evaluation-photos")
-        .getPublicUrl(filePath);
+        .upload(filePath, buffer, { contentType: file.type });
+      
+      console.log(`[submitAreaEvaluation] Upload result ${category}`, { uploadData, uploadError });
 
-      await adminClient.from("evaluation_photos").insert({
-        evaluation_id: evalData.id,
-        evaluation_type: "area",
-        storage_path: filePath,
-        public_url: publicUrl,
-        file_name: file.name,
-        mime_type: file.type,
-        photo_category: "other",
-        caption: "class_rep",
-        uploaded_by: user.id,
-      });
-    } else if (uploadError) {
-      console.error(`Upload error for ${category}:`, uploadError);
+      if (!uploadError && uploadData) {
+        const { data: { publicUrl } } = adminClient.storage
+          .from("evaluation-photos")
+          .getPublicUrl(filePath);
+
+        await adminClient.from("evaluation_photos").insert({
+          evaluation_id: evalData.id,
+          evaluation_type: "area",
+          storage_path: filePath,
+          public_url: publicUrl,
+          file_name: file.name,
+          mime_type: file.type,
+          photo_category: "other",
+          caption: isReporter ? "class_rep" : "teacher",
+          uploaded_by: user.id,
+        });
+      } else if (uploadError) {
+        console.error(`Upload error for ${category}:`, uploadError);
+      }
+    } catch (err) {
+      console.error(`[submitAreaEvaluation] Exception in upload ${category}`, err);
     }
   };
 
   if (photo1 && photo1.size > 0) uploadPromises.push(uploadPhoto(photo1, "photo1"));
   if (photo2 && photo2.size > 0) uploadPromises.push(uploadPhoto(photo2, "photo2"));
 
+  console.log(`[submitAreaEvaluation] Starting Promise.all for uploads`);
   await Promise.all(uploadPromises);
+  console.log(`[submitAreaEvaluation] Promise.all completed`);
 
-  // 4. Send Notification if submitted
+  // 4. Send Notification
   if (!isReporter && status === "submitted") {
-    // Get grade level for this area
+    // Notify Grade Head when Student Council submits evaluation
     const { data: areaData } = await adminClient
       .from("responsible_areas")
-      .select("homerooms(grade_level, class_name)")
+      .select("homeroom_id")
       .eq("id", responsible_area_id)
       .single();
-    
-    if (areaData?.homerooms) {
-      const homeroom = Array.isArray(areaData.homerooms) ? areaData.homerooms[0] : areaData.homerooms;
+      
+    if (areaData?.homeroom_id) {
+      const { data: homeroom } = await adminClient
+        .from("homerooms")
+        .select("grade_level, class_name")
+        .eq("id", areaData.homeroom_id)
+        .single();
+        
       if (homeroom?.grade_level) {
         const className = homeroom.class_name;
         await notifyGradeHead(
           adminClient,
           homeroom.grade_level,
-          "มีการประเมินพื้นที่รับผิดชอบใหม่",
-          `รอการอนุมัติ: ประเมินพื้นที่รับผิดชอบของห้อง ${className}`,
+          "มีการส่งรายงานพื้นที่รับผิดชอบ",
+          `รอการประเมิน: พื้นที่ของห้อง ${className}`,
+          "area_evaluation",
+          evalData.id,
+          "/area-evaluation"
+        );
+      }
+    }
+  } else if (isReporter) {
+    // Notify Student Council when Class Rep submits a draft/report
+    const { data: areaData } = await adminClient
+      .from("responsible_areas")
+      .select("homeroom_id")
+      .eq("id", responsible_area_id)
+      .single();
+      
+    if (areaData?.homeroom_id) {
+      const { data: homeroom } = await adminClient
+        .from("homerooms")
+        .select("class_name")
+        .eq("id", areaData.homeroom_id)
+        .single();
+        
+      if (homeroom) {
+        await notifyStudentCouncil(
+          adminClient,
+          "มีพื้นที่รับผิดชอบรอประเมินคะแนน",
+          `พื้นที่ของห้อง ${homeroom.class_name} ส่งรายงานแล้ว กรุณาไปตรวจสอบและให้คะแนน`,
           "area_evaluation",
           evalData.id,
           "/area-evaluation/approvals"
@@ -188,6 +237,7 @@ export async function submitAreaEvaluation(formData: FormData) {
   }
 
   // 5. Revalidate path to refresh list
+  console.log(`[submitAreaEvaluation] Done. Revalidating path.`);
   revalidatePath("/area-evaluation");
 
   return { success: true, evaluation_id: evalData.id };
@@ -201,7 +251,7 @@ export async function approveAreaEvaluation(evaluationId: string, percentage: nu
   );
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { error } = await adminClient
+  const { data: updatedEval, error } = await adminClient
     .from("area_evaluations")
     .update({
       status: "approved",
@@ -211,9 +261,24 @@ export async function approveAreaEvaluation(evaluationId: string, percentage: nu
       grade,
       approved_at: new Date().toISOString(),
     })
-    .eq("id", evaluationId);
+    .eq("id", evaluationId)
+    .select("evaluator_id, responsible_areas(homerooms(class_name))")
+    .single();
 
   if (error) return { success: false, error: error.message };
+
+  if (updatedEval?.evaluator_id) {
+    const className = updatedEval.responsible_areas?.homerooms?.class_name || "ของคุณ";
+    await notifyUser(
+      adminClient,
+      updatedEval.evaluator_id,
+      "✅ ผลการประเมินพื้นที่ถูกอนุมัติ",
+      `รายงานการประเมินพื้นที่ของห้อง ${className} ได้รับการอนุมัติแล้ว`,
+      "area_evaluation",
+      evaluationId,
+      "/area-evaluation"
+    );
+  }
   revalidatePath("/area-evaluation");
   revalidatePath("/area-evaluation/approvals");
   revalidatePath("/dashboard");
@@ -228,7 +293,7 @@ export async function rejectAreaEvaluation(evaluationId: string, reason: string)
   );
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { error } = await adminClient
+  const { data: updatedEval, error } = await adminClient
     .from("area_evaluations")
     .update({
       status: "rejected",
@@ -236,9 +301,24 @@ export async function rejectAreaEvaluation(evaluationId: string, reason: string)
       rejection_reason: reason,
       rejected_at: new Date().toISOString(),
     })
-    .eq("id", evaluationId);
+    .eq("id", evaluationId)
+    .select("evaluator_id, responsible_areas(homerooms(class_name))")
+    .single();
 
   if (error) return { success: false, error: error.message };
+
+  if (updatedEval?.evaluator_id) {
+    const className = updatedEval.responsible_areas?.homerooms?.class_name || "ของคุณ";
+    await notifyUser(
+      adminClient,
+      updatedEval.evaluator_id,
+      "❌ ผลการประเมินพื้นที่ถูกตีกลับ",
+      `รายงานการประเมินพื้นที่ของห้อง ${className} ถูกตีกลับ: ${reason}`,
+      "area_evaluation",
+      evaluationId,
+      "/area-evaluation"
+    );
+  }
   revalidatePath("/area-evaluation");
   revalidatePath("/area-evaluation/approvals");
   return { success: true };
@@ -309,10 +389,10 @@ export async function evaluateAreaReport(evaluationId: string, formData: FormDat
     const ext = file.name.split('.').pop();
     const filePath = `${evaluationId}/${category}_${Date.now()}.${ext}`;
 
-    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(await file.arrayBuffer());
     const { data: uploadData, error: uploadError } = await adminClient.storage
       .from("evaluation-photos")
-      .upload(filePath, arrayBuffer, { contentType: file.type });
+      .upload(filePath, buffer, { contentType: file.type });
 
     if (!uploadError && uploadData) {
       const { data: { publicUrl } } = adminClient.storage

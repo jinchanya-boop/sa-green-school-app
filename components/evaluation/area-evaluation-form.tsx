@@ -53,14 +53,30 @@ export function AreaEvaluationForm({ areas, semesters, criteria, userRole, onCan
       formData.set("status", "submitted");
     }
 
-    const result = await submitAreaEvaluation(formData);
+    try {
+      console.log("Calling submitAreaEvaluation with formData:", Array.from(formData.keys()));
+      const result = await submitAreaEvaluation(formData);
+      console.log("Received result from server:", result);
 
-    setLoading(false);
+      setLoading(false);
 
-    if (result.success) {
-      onSuccess();
-    } else {
-      setError(result.error || "เกิดข้อผิดพลาดในการบันทึก");
+      if (result && result.success) {
+        console.log("Success! Calling onSuccess");
+        // We will just use alert if toast is not imported just in case
+        if (typeof toast !== 'undefined' && toast.success) {
+          toast.success("บันทึกการประเมินพื้นที่เรียบร้อย");
+        } else {
+          alert("บันทึกการประเมินพื้นที่เรียบร้อย");
+        }
+        onSuccess();
+      } else {
+        console.log("Server returned error:", result?.error);
+        setError(result?.error || "เกิดข้อผิดพลาดในการบันทึก");
+      }
+    } catch (err: any) {
+      console.error("Caught error in handleSubmit:", err);
+      setLoading(false);
+      setError(err?.message || "เกิดข้อผิดพลาดจากเซิร์ฟเวอร์");
     }
   }
 

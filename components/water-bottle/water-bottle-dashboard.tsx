@@ -8,9 +8,10 @@ import { calculateGrade, GRADE_BG, formatThaiDateShort } from "@/lib/utils";
 
 interface WaterBottleDashboardProps {
   records: any[];
+  assignedHomeroomId?: string;
 }
 
-export function WaterBottleDashboard({ records }: WaterBottleDashboardProps) {
+export function WaterBottleDashboard({ records, assignedHomeroomId }: WaterBottleDashboardProps) {
   const [activeTab, setActiveTab] = useState<"daily" | "weekly" | "monthly">("daily");
 
   const leaderboard = useMemo(() => {
@@ -81,6 +82,9 @@ export function WaterBottleDashboard({ records }: WaterBottleDashboardProps) {
   const top3 = leaderboard.slice(0, 3);
   const others = leaderboard.slice(3);
 
+  // Find user's own room stats
+  const myRoom = assignedHomeroomId ? leaderboard.find(item => item.homeroom_id === assignedHomeroomId) : null;
+
   // Chart Data for top 10
   const chartData = leaderboard.slice(0, 10).map(item => ({
     name: item.class_name,
@@ -139,6 +143,45 @@ export function WaterBottleDashboard({ records }: WaterBottleDashboardProps) {
           </div>
         ) : (
           <>
+            {/* My Room Highlight */}
+            {myRoom && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-gradient-to-r from-cyan-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg shadow-cyan-500/20 relative overflow-hidden"
+              >
+                <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20">
+                      <Trophy className="w-7 h-7 text-cyan-100" />
+                    </div>
+                    <div>
+                      <span className="text-cyan-100 font-bold text-sm uppercase tracking-wider block mb-1">สถิติห้องของคุณ</span>
+                      <h3 className="text-2xl font-black">{myRoom.class_name}</h3>
+                      <p className="text-cyan-100 text-sm mt-1">{myRoom.teacher_name}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-6 bg-white/10 backdrop-blur-md rounded-2xl px-6 py-4 border border-white/10">
+                    <div className="text-center border-r border-white/20 pr-6">
+                      <span className="block text-cyan-100 text-xs font-bold uppercase mb-1">อันดับที่</span>
+                      <span className="text-3xl font-black">{myRoom.rank}</span>
+                    </div>
+                    <div className="text-center border-r border-white/20 pr-6">
+                      <span className="block text-cyan-100 text-xs font-bold uppercase mb-1">อัตราการใช้แก้วน้ำ</span>
+                      <span className="text-3xl font-black">{myRoom.avg_percentage.toFixed(1)}%</span>
+                    </div>
+                    <div className="text-center">
+                      <span className="block text-cyan-100 text-xs font-bold uppercase mb-1">ผลประเมิน</span>
+                      <span className="text-xl font-bold bg-white/20 px-3 py-1 rounded-lg inline-block">
+                        {myRoom.grade === "gold" ? "เหรียญทอง" : myRoom.grade === "silver" ? "เหรียญเงิน" : myRoom.grade === "bronze" ? "เหรียญทองแดง" : "ไม่ผ่าน"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             {/* Top 3 Podium */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end mb-8 pt-8">
               {/* Rank 2 - Silver */}

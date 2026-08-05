@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
-import { notifyGradeHead } from "@/lib/notifications";
+import { notifyGradeHead, notifyUser } from "@/lib/notifications";
 
 export async function submitWaterBottleCheck(formData: FormData) {
   const supabase = await createClient();
@@ -149,7 +149,7 @@ export async function approveWaterBottleCheck(recordId: string, notes: string) {
   );
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { error } = await adminClient
+  const { data: updatedRecord, error } = await adminClient
     .from("water_bottle_records")
     .update({
       status: "approved",
@@ -157,9 +157,25 @@ export async function approveWaterBottleCheck(recordId: string, notes: string) {
       acknowledger_notes: notes,
       acknowledged_at: new Date().toISOString(),
     })
-    .eq("id", recordId);
+    .eq("id", recordId)
+    .select("teacher_id, homerooms(class_name), check_date")
+    .single();
 
   if (error) return { success: false, error: error.message };
+
+  if (updatedRecord?.teacher_id) {
+    const className = updatedRecord.homerooms?.class_name || "ของคุณ";
+    const date = updatedRecord.check_date || "ล่าสุด";
+    await notifyUser(
+      adminClient,
+      updatedRecord.teacher_id,
+      "✅ การบันทึกแก้วน้ำถูกรับทราบแล้ว",
+      `บันทึกแก้วน้ำส่วนตัวของห้อง ${className} ประจำวันที่ ${date} ได้รับการอนุมัติ/รับทราบแล้ว`,
+      "water_bottle",
+      recordId,
+      "/water-bottle"
+    );
+  }
   revalidatePath("/water-bottle");
   revalidatePath("/dashboard");
   return { success: true };
@@ -173,18 +189,34 @@ export async function rejectWaterBottleCheck(recordId: string, reason: string) {
   );
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { error } = await adminClient
+  const { data: updatedRecord, error } = await adminClient
     .from("water_bottle_records")
     .update({
       status: "rejected",
       acknowledger_id: user?.id,
-      teacher_notes: reason, // Use teacher_notes or acknowledger_notes? Schema has acknowledger_notes. Let's use acknowledger_notes.
+      teacher_notes: reason,
       acknowledger_notes: reason,
       acknowledged_at: new Date().toISOString(),
     })
-    .eq("id", recordId);
+    .eq("id", recordId)
+    .select("teacher_id, homerooms(class_name), check_date")
+    .single();
 
   if (error) return { success: false, error: error.message };
+
+  if (updatedRecord?.teacher_id) {
+    const className = updatedRecord.homerooms?.class_name || "ของคุณ";
+    const date = updatedRecord.check_date || "ล่าสุด";
+    await notifyUser(
+      adminClient,
+      updatedRecord.teacher_id,
+      "❌ การบันทึกแก้วน้ำถูกตีกลับ",
+      `บันทึกแก้วน้ำส่วนตัวของห้อง ${className} ประจำวันที่ ${date} ถูกตีกลับ: ${reason}`,
+      "water_bottle",
+      recordId,
+      "/water-bottle"
+    );
+  }
   revalidatePath("/water-bottle");
   return { success: true };
 }

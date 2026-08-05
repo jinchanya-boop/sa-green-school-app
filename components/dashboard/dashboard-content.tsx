@@ -53,6 +53,7 @@ interface DashboardContentProps {
   };
   evaluationRounds?: any[];
   profile?: any;
+  academicYear?: number;
 }
 
 const containerVariants: Variants = {
@@ -102,6 +103,7 @@ function StandardDashboardContent({
   homerooms,
   todaySubmissions = { area: [], classroom: [], water: [] },
   evaluationRounds = [],
+  academicYear = 2567,
 }: DashboardContentProps) {
   const areaGrades = countGrades(areaStats);
   const classroomGrades = countGrades(classroomStats);
@@ -403,7 +405,7 @@ function StandardDashboardContent({
           แดชบอร์ดสิ่งแวดล้อม 🌿
         </h1>
         <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-          ภาพรวมผลการประเมินสิ่งแวดล้อมโรงเรียนสา · ปีการศึกษา 2567
+          ภาพรวมผลการประเมินสิ่งแวดล้อมโรงเรียนสา · ปีการศึกษา {academicYear}
         </p>
       </motion.div>
 

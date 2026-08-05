@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { X, Image as ImageIcon, Save } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { calculateGrade, formatThaiDate } from "@/lib/utils";
+import imageCompression from "browser-image-compression";
 
 import { evaluateAreaReport, approveAreaEvaluation, rejectAreaEvaluation } from "@/app/(dashboard)/area-evaluation/actions";
 
@@ -48,13 +49,39 @@ export function AreaDetailModal({ evaluation, userRole, criteria = [], onClose }
     setSubmitting(true);
     setError(null);
     
-    const formData = new FormData(e.currentTarget);
-    const result = await evaluateAreaReport(evaluation.id, formData);
-    
-    if (result.success) {
-      onClose();
-    } else {
-      setError(result.error || "เกิดข้อผิดพลาดในการบันทึก");
+    try {
+      const formData = new FormData(e.currentTarget);
+      
+      // Compress photos before sending to prevent Next.js Server Action hanging on large files
+      const compressOptions = { maxSizeMB: 0.5, maxWidthOrHeight: 1280, useWebWorker: true };
+      
+      const photo1 = formData.get("photo_1") as File;
+      if (photo1 && photo1.size > 0) {
+        try {
+          const compressed = await imageCompression(photo1, compressOptions);
+          formData.set("photo_1", compressed, photo1.name);
+        } catch (e) { console.error("Error compressing photo 1", e); }
+      }
+
+      const photo2 = formData.get("photo_2") as File;
+      if (photo2 && photo2.size > 0) {
+        try {
+          const compressed = await imageCompression(photo2, compressOptions);
+          formData.set("photo_2", compressed, photo2.name);
+        } catch (e) { console.error("Error compressing photo 2", e); }
+      }
+
+      const result = await evaluateAreaReport(evaluation.id, formData);
+      
+      if (result.success) {
+        onClose();
+      } else {
+        setError(result.error || "เกิดข้อผิดพลาดในการบันทึก");
+        setSubmitting(false);
+      }
+    } catch (err: any) {
+      console.error("Error submitting scores:", err);
+      setError(err?.message || "เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์");
       setSubmitting(false);
     }
   }
@@ -109,68 +136,7 @@ export function AreaDetailModal({ evaluation, userRole, criteria = [], onClose }
         )}
 
         <div className="flex-1 overflow-y-auto p-6 space-y-8">
-          {/* Photos */}
-          <div>
-            <h3 className="font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-blue-500" />
-              ภาพถ่ายประกอบ
-            </h3>
-            
-            {loading ? (
-              <div className="h-32 flex items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-xl">
-                <span className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span>
-              </div>
-            ) : photos.length === 0 ? (
-              <div className="p-4 bg-yellow-50 text-yellow-700 rounded-xl text-sm">
-                ไม่พบภาพถ่ายประกอบ
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {/* Student Photos */}
-                {photos.some(p => p.caption === 'class_rep') && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">ภาพจากตัวแทนห้อง (นักเรียน)</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      {photos.filter(p => p.caption === 'class_rep').map(p => (
-                        <div key={p.id} className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
-                          <img src={p.public_url} alt="รูปภาพจากตัวแทนห้อง" className="object-cover w-full h-full" />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Student Council Photos */}
-                {photos.some(p => p.caption === 'student_council') && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">ภาพจากองค์กรนักเรียน</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      {photos.filter(p => p.caption === 'student_council').map(p => (
-                        <div key={p.id} className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
-                          <img src={p.public_url} alt="รูปภาพจากองค์กรนักเรียน" className="object-cover w-full h-full" />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Legacy/Other Photos without explicit caption */}
-                {photos.some(p => p.caption !== 'class_rep' && p.caption !== 'student_council') && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">ภาพอื่นๆ</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      {photos.filter(p => p.caption !== 'class_rep' && p.caption !== 'student_council').map(p => (
-                        <div key={p.id} className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
-                          <img src={p.public_url} alt="รูปภาพทั่วไป" className="object-cover w-full h-full" />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
+          {/* Grading is moved above photos */}
           {/* Grading */}
           {needsScoring ? (
             <form id="scoring-form" onSubmit={handleSubmitScores} className="space-y-4">
@@ -231,7 +197,7 @@ export function AreaDetailModal({ evaluation, userRole, criteria = [], onClose }
               </div>
             </form>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 mb-8">
               <h3 className="font-medium text-gray-900 dark:text-white pb-2 border-b border-gray-100 dark:border-gray-800">
                 คะแนนการประเมิน
               </h3>
@@ -286,9 +252,71 @@ export function AreaDetailModal({ evaluation, userRole, criteria = [], onClose }
             </div>
           )}
 
+          {/* Photos */}
+          <div className="mt-8 space-y-6">
+            <h3 className="font-medium text-gray-900 dark:text-white pb-2 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-blue-500" />
+              ภาพถ่ายประกอบ
+            </h3>
+            
+            {loading ? (
+              <div className="h-32 flex items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <span className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span>
+              </div>
+            ) : photos.length === 0 ? (
+              <div className="p-4 bg-yellow-50 text-yellow-700 rounded-xl text-sm">
+                ไม่พบภาพถ่ายประกอบ
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Student Photos */}
+                {photos.some(p => p.caption === 'class_rep') && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">ภาพจากตัวแทนห้อง (นักเรียน)</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      {photos.filter(p => p.caption === 'class_rep').map(p => (
+                        <div key={p.id} className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
+                          <img src={p.public_url} alt="รูปภาพจากตัวแทนห้อง" className="object-cover w-full h-full" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Student Council Photos */}
+                {photos.some(p => p.caption === 'student_council') && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">ภาพจากองค์กรนักเรียน</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      {photos.filter(p => p.caption === 'student_council').map(p => (
+                        <div key={p.id} className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
+                          <img src={p.public_url} alt="รูปภาพจากองค์กรนักเรียน" className="object-cover w-full h-full" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Legacy/Other Photos without explicit caption */}
+                {photos.some(p => p.caption !== 'class_rep' && p.caption !== 'student_council') && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">ภาพอื่นๆ</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      {photos.filter(p => p.caption !== 'class_rep' && p.caption !== 'student_council').map(p => (
+                        <div key={p.id} className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
+                          <img src={p.public_url} alt="รูปภาพทั่วไป" className="object-cover w-full h-full" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Notes */}
           {evaluation.approver_notes && (
-            <div className="space-y-2">
+            <div className="space-y-2 mt-8">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 ความคิดเห็นจากผู้อนุมัติ
               </label>

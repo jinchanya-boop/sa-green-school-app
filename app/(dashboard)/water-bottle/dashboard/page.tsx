@@ -10,6 +10,31 @@ export const metadata: Metadata = {
 export default async function WaterBottleDashboardPage() {
   const supabase = await createClient();
 
+  // Fetch current user's homeroom
+  const { data: { user } } = await supabase.auth.getUser();
+  let assignedHomeroomId: string | null = null;
+  
+  if (user) {
+    const { data: homeroomTeacher } = await supabase
+      .from("homeroom_teachers")
+      .select("homeroom_id")
+      .eq("teacher_id", user.id)
+      .limit(1)
+      .maybeSingle();
+    
+    if (homeroomTeacher) {
+      assignedHomeroomId = homeroomTeacher.homeroom_id;
+    } else {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("homeroom_id")
+        .eq("id", user.id)
+        .limit(1)
+        .maybeSingle();
+      if (profile) assignedHomeroomId = profile.homeroom_id;
+    }
+  }
+
   // Fetch all approved records for the current active semester
   const { data: activeSemester } = await supabase
     .from("semesters")
@@ -34,6 +59,7 @@ export default async function WaterBottleDashboardPage() {
   return (
     <WaterBottleDashboard
       records={records ?? []}
+      assignedHomeroomId={assignedHomeroomId || undefined}
     />
   );
 }

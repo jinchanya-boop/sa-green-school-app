@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
-import { notifyBuildingHead } from "@/lib/notifications";
+import { notifyBuildingHead, notifyUser, notifyStudentCouncil } from "@/lib/notifications";
 
 export async function submitClassroomEvaluation(formData: FormData) {
   const supabase = await createClient();
@@ -120,12 +120,13 @@ export async function submitClassroomEvaluation(formData: FormData) {
     const ext = file.name.split('.').pop();
     const filePath = `${evalData.id}/${category}_${Date.now()}.${ext}`;
     
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const { data: uploadData, error: uploadError } = await adminClient.storage
       .from("evaluation-photos")
-      .upload(filePath, file);
+      .upload(filePath, buffer, { contentType: file.type });
 
     if (!uploadError && uploadData) {
-      const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl } } = adminClient.storage
         .from("evaluation-photos")
         .getPublicUrl(filePath);
 
@@ -153,7 +154,7 @@ export async function submitClassroomEvaluation(formData: FormData) {
 
   await Promise.all(uploadPromises);
 
-  // 4. Send Notification if submitted
+  // 4. Send Notification
   if (!isReporter && evalData) {
     const { data: roomData } = await adminClient
       .from("rooms")
@@ -165,8 +166,25 @@ export async function submitClassroomEvaluation(formData: FormData) {
       await notifyBuildingHead(
         adminClient,
         roomData.building_id,
-        "มีการประเมินห้องเรียนใหม่",
-        `รอการอนุมัติ: ประเมินความสะอาดห้องเรียน ${roomData.name}`,
+        "มีการส่งรายงานห้องเรียน",
+        `รอการประเมิน: ความสะอาดของห้อง ${roomData.name}`,
+        "classroom_evaluation",
+        evalData.id,
+        "/classroom-eval"
+      );
+    }
+  } else if (isReporter && evalData) {
+    const { data: roomData } = await adminClient
+      .from("rooms")
+      .select("name")
+      .eq("id", room_id)
+      .single();
+      
+    if (roomData) {
+      await notifyStudentCouncil(
+        adminClient,
+        "มีความสะอาดห้องเรียนรอประเมินคะแนน",
+        `ห้องเรียน ${roomData.name} ส่งรายงานแล้ว กรุณาไปตรวจสอบและให้คะแนน`,
         "classroom_evaluation",
         evalData.id,
         "/classroom-eval"
@@ -238,17 +256,18 @@ export async function submitClassroomReport(formData: FormData) {
     const ext = file.name.split('.').pop();
     const filePath = `${evalData.id}/${category}_${Date.now()}.${ext}`;
 
-    const { error: uploadError } = await supabase.storage
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const { error: uploadError } = await adminClient.storage
       .from("evaluation-photos")
-      .upload(filePath, file);
+      .upload(filePath, buffer, { contentType: file.type });
 
     if (uploadError) return;
 
-    const { data: { publicUrl } } = supabase.storage
+    const { data: { publicUrl } } = adminClient.storage
       .from("evaluation-photos")
       .getPublicUrl(filePath);
 
-    await supabase.from("evaluation_photos").insert({
+    await adminClient.from("evaluation_photos").insert({
       evaluation_id: evalData.id,
       evaluation_type: "classroom",
       storage_path: filePath,
@@ -305,11 +324,12 @@ export async function evaluateClassroomReport(evaluationId: string, formData: Fo
 
   const percentage = (total_score / (max_score || 30)) * 100;
 
-  // Grade calculation (Premium: 27-30 (90%), Gold: 23-26 (76.6%), Silver: 18-22 (60%), Bronze: 0-17)
-  let grade = "bronze";
-  if (total_score >= 27) grade = "premium";
-  else if (total_score >= 23) grade = "gold";
-  else if (total_score >= 18) grade = "silver";
+  // Grade calculation
+  let grade = "fail";
+  if (percentage >= 90) grade = "gold";
+  else if (percentage >= 80) grade = "silver";
+  else if (percentage >= 70) grade = "bronze";
+  else if (percentage >= 60) grade = "pass";
 
   const { error: evalError } = await adminClient
     .from("classroom_evaluations")
@@ -344,10 +364,10 @@ export async function evaluateClassroomReport(evaluationId: string, formData: Fo
     const ext = file.name.split('.').pop();
     const filePath = `${evaluationId}/${category}_${Date.now()}.${ext}`;
 
-    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(await file.arrayBuffer());
     const { data: uploadData, error: uploadError } = await adminClient.storage
       .from("evaluation-photos")
-      .upload(filePath, arrayBuffer, { contentType: file.type });
+      .upload(filePath, buffer, { contentType: file.type });
 
     if (!uploadError && uploadData) {
       const { data: { publicUrl } } = adminClient.storage
@@ -404,16 +424,31 @@ export async function approveClassroomEvaluation(id: string, notes?: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "Authentication required" };
 
-  const { error } = await supabase
+  const { data: updatedEval, error } = await supabase
     .from("classroom_evaluations")
     .update({ 
       status: "approved",
       approver_id: user.id,
       approver_notes: notes || null
     })
-    .eq("id", id);
+    .eq("id", id)
+    .select("evaluator_id, homerooms(class_name)")
+    .single();
 
   if (error) return { success: false, error: error.message };
+
+  if (updatedEval?.evaluator_id) {
+    const className = updatedEval.homerooms?.class_name || "ของคุณ";
+    await notifyUser(
+      supabase, // Using standard client since user is authenticated
+      updatedEval.evaluator_id,
+      "✅ ผลการประเมินห้องเรียนถูกอนุมัติ",
+      `รายงานการประเมินความสะอาดของห้อง ${className} ได้รับการอนุมัติแล้ว`,
+      "classroom_evaluation",
+      id,
+      "/classroom-eval"
+    );
+  }
   revalidatePath("/classroom-eval");
   return { success: true };
 }
@@ -423,16 +458,31 @@ export async function rejectClassroomEvaluation(id: string, notes: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "Authentication required" };
 
-  const { error } = await supabase
+  const { data: updatedEval, error } = await supabase
     .from("classroom_evaluations")
     .update({ 
       status: "rejected",
       approver_id: user.id,
       approver_notes: notes
     })
-    .eq("id", id);
+    .eq("id", id)
+    .select("evaluator_id, homerooms(class_name)")
+    .single();
 
   if (error) return { success: false, error: error.message };
+
+  if (updatedEval?.evaluator_id) {
+    const className = updatedEval.homerooms?.class_name || "ของคุณ";
+    await notifyUser(
+      supabase,
+      updatedEval.evaluator_id,
+      "❌ ผลการประเมินห้องเรียนถูกตีกลับ",
+      `รายงานการประเมินความสะอาดของห้อง ${className} ถูกตีกลับ: ${notes}`,
+      "classroom_evaluation",
+      id,
+      "/classroom-eval"
+    );
+  }
   revalidatePath("/classroom-eval");
   return { success: true };
 }

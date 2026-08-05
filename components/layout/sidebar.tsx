@@ -55,7 +55,7 @@ const navItems: NavItem[] = [
     href: "/water-bottle",
     label: "ติดตามแก้วน้ำส่วนตัว",
     icon: Droplets,
-    roles: ["administrator", "director", "deputy_director", "grade_supervisor", "homeroom_teacher"],
+    roles: ["administrator", "director", "deputy_director", "grade_supervisor", "homeroom_teacher", "student", "class_representative", "student_council"],
   },
   {
     href: "/reports",

@@ -66,14 +66,30 @@ export function WaterBottleList({ records: initialRecords, homerooms, semesters,
   const avgGrade = calculateGrade(avgPercent);
   const greenLevel = avgPercent >= 90 ? "Excellent" : avgPercent >= 80 ? "Good" : avgPercent >= 70 ? "Fair" : "Needs Improvement";
 
-  // Chart data — last 7 records
-  const chartData = recs
-    .slice(0, 7)
-    .reverse()
-    .map((r) => ({
-      date: r.check_date ? formatThaiDateShort(r.check_date) : "—",
-      rate: r.percentage ?? 0,
-    }));
+  const canRecord = ["administrator", "director", "deputy_director", "grade_supervisor", "homeroom_teacher"].includes(userRole);
+
+  const myRoomRecords = assignedHomeroomId ? recs.filter(r => r.homeroom_id === assignedHomeroomId) : [];
+  const myLatestRecord = myRoomRecords.length > 0 ? myRoomRecords[0] : null;
+
+  // Chart data — average per day for the last 7 days
+  const groupedByDate = recs.reduce((acc, r) => {
+    if (!r.check_date) return acc;
+    if (!acc[r.check_date]) {
+      acc[r.check_date] = { total: 0, count: 0 };
+    }
+    acc[r.check_date].total += (r.percentage ?? 0);
+    acc[r.check_date].count += 1;
+    return acc;
+  }, {} as Record<string, {total: number, count: number}>);
+
+  const chartData = Object.entries(groupedByDate)
+    .map(([date, data]) => ({
+      date: formatThaiDateShort(date),
+      rate: data.total / data.count,
+      rawDate: date,
+    }))
+    .sort((a, b) => new Date(a.rawDate).getTime() - new Date(b.rawDate).getTime())
+    .slice(-7);
 
   return (
     <div className="space-y-6">
@@ -171,15 +187,60 @@ export function WaterBottleList({ records: initialRecords, homerooms, semesters,
                     className="w-full pl-10 pr-4 py-2.5 rounded-full border border-gray-200 dark:border-gray-700/50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all shadow-sm"
                   />
                 </div>
-                <button 
-                  onClick={() => setIsFormOpen(true)}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-full text-sm font-bold transition-all shadow-lg shadow-cyan-500/20 hover:scale-105 active:scale-95"
-                >
-                  <Plus className="w-4 h-4" />
-                  บันทึกใหม่
-                </button>
+                {canRecord && (
+                  <button 
+                    onClick={() => setIsFormOpen(true)}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-full text-sm font-bold transition-all shadow-lg shadow-cyan-500/20 hover:scale-105 active:scale-95"
+                  >
+                    <Plus className="w-4 h-4" />
+                    บันทึกใหม่
+                  </button>
+                )}
               </div>
             </motion.div>
+
+            {/* My Room Highlight */}
+            {assignedHomeroomId && (
+              <motion.div variants={itemVariants} className="bg-gradient-to-r from-cyan-500 to-blue-600 rounded-3xl p-6 text-white shadow-lg shadow-cyan-500/20 relative overflow-hidden">
+                <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20">
+                      <Trophy className="w-7 h-7 text-cyan-100" />
+                    </div>
+                    <div>
+                      <span className="text-cyan-100 font-bold text-sm uppercase tracking-wider block mb-1">สถานะห้องของคุณล่าสุด</span>
+                      {myLatestRecord ? (
+                        <>
+                          <h3 className="text-2xl font-black">{myLatestRecord.class_name}</h3>
+                          <p className="text-cyan-100 text-sm mt-1">{myLatestRecord.teacher_name}</p>
+                        </>
+                      ) : (
+                        <h3 className="text-xl font-bold">ยังไม่มีข้อมูลของห้องคุณ</h3>
+                      )}
+                    </div>
+                  </div>
+                  {myLatestRecord && (
+                    <div className="flex items-center gap-6 bg-white/10 backdrop-blur-md rounded-2xl px-6 py-4 border border-white/10">
+                      <div className="text-center border-r border-white/20 pr-6">
+                        <span className="block text-cyan-100 text-xs font-bold uppercase mb-1">แก้วน้ำ / นร.</span>
+                        <span className="text-2xl font-black">{myLatestRecord.students_with_bottle}/{myLatestRecord.total_students}</span>
+                      </div>
+                      <div className="text-center border-r border-white/20 pr-6">
+                        <span className="block text-cyan-100 text-xs font-bold uppercase mb-1">อัตราการใช้</span>
+                        <span className="text-3xl font-black">{myLatestRecord.percentage?.toFixed(1)}%</span>
+                      </div>
+                      <div className="text-center">
+                        <span className="block text-cyan-100 text-xs font-bold uppercase mb-1">ผลประเมิน</span>
+                        <span className="text-xl font-bold bg-white/20 px-3 py-1 rounded-lg inline-block">
+                          {myLatestRecord.grade === "gold" ? "เหรียญทอง" : myLatestRecord.grade === "silver" ? "เหรียญเงิน" : myLatestRecord.grade === "bronze" ? "เหรียญทองแดง" : "ไม่ผ่าน"}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
 
             {/* Summary Cards */}
             <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4">

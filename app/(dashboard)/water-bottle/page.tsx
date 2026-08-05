@@ -19,10 +19,18 @@ export default async function WaterBottlePage() {
       .select("homeroom_id")
       .eq("teacher_id", user.id)
       .limit(1)
-      .single();
+      .maybeSingle();
     
     if (homeroomTeacher) {
       assignedHomeroomId = homeroomTeacher.homeroom_id;
+    } else {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("homeroom_id")
+        .eq("id", user.id)
+        .limit(1)
+        .maybeSingle();
+      if (profile) assignedHomeroomId = profile.homeroom_id;
     }
   }
 

@@ -68,3 +68,55 @@ export async function notifyBuildingHead(
 
   await adminClient.from("notifications").insert(notifications);
 }
+
+export async function notifyUser(
+  adminClient: SupabaseClient,
+  userId: string,
+  title: string,
+  body: string,
+  entityType: string,
+  entityId: string,
+  url: string
+) {
+  if (!userId) return;
+  const notification = {
+    recipient_id: userId,
+    title,
+    body,
+    entity_type: entityType,
+    entity_id: entityId,
+    action_url: url,
+    event: "system_alert",
+    channel: "in_app"
+  };
+  await adminClient.from("notifications").insert(notification);
+}
+
+export async function notifyStudentCouncil(
+  adminClient: SupabaseClient,
+  title: string,
+  body: string,
+  entityType: string,
+  entityId: string,
+  url: string
+) {
+  const { data: councilMembers } = await adminClient
+    .from("profiles")
+    .select("id")
+    .eq("role", "student_council");
+
+  if (!councilMembers || councilMembers.length === 0) return;
+
+  const notifications = councilMembers.map((member: any) => ({
+    recipient_id: member.id,
+    title,
+    body,
+    entity_type: entityType,
+    entity_id: entityId,
+    action_url: url,
+    event: "system_alert",
+    channel: "in_app"
+  }));
+
+  await adminClient.from("notifications").insert(notifications);
+}

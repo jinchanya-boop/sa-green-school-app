@@ -159,7 +159,8 @@ export default async function DashboardPage() {
     { data: todayArea },
     { data: todayClass },
     { data: todayWater },
-    roundsRes
+    roundsRes,
+    { data: activeSemester }
   ] = await Promise.all([
     supabase
       .from("area_evaluations")
@@ -178,6 +179,11 @@ export default async function DashboardPage() {
       .select("value")
       .eq("key", "evaluation_rounds")
       .maybeSingle(),
+    supabase
+      .from("semesters")
+      .select("academic_year_id, academic_years!inner(year)")
+      .eq("is_active", true)
+      .maybeSingle(),
   ]);
 
   let evaluationRounds = [];
@@ -186,6 +192,8 @@ export default async function DashboardPage() {
       evaluationRounds = JSON.parse(roundsRes.data.value);
     }
   } catch (e) {}
+
+  const academicYear = activeSemester?.academic_years?.year || 2569; // Fallback to 2569
 
   return (
     <DashboardContent
@@ -203,6 +211,7 @@ export default async function DashboardPage() {
       }}
       evaluationRounds={evaluationRounds}
       profile={profile}
+      academicYear={academicYear}
     />
   );
 }
