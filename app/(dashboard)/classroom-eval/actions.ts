@@ -257,17 +257,17 @@ export async function submitClassroomReport(formData: FormData) {
     const filePath = `${evalData.id}/${category}_${Date.now()}.${ext}`;
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const { error: uploadError } = await adminClient.storage
+    const { error: uploadError } = await supabase.storage
       .from("evaluation-photos")
       .upload(filePath, buffer, { contentType: file.type });
 
     if (uploadError) return;
 
-    const { data: { publicUrl } } = adminClient.storage
+    const { data: { publicUrl } } = supabase.storage
       .from("evaluation-photos")
       .getPublicUrl(filePath);
 
-    await adminClient.from("evaluation_photos").insert({
+    await supabase.from("evaluation_photos").insert({
       evaluation_id: evalData.id,
       evaluation_type: "classroom",
       storage_path: filePath,
@@ -438,7 +438,8 @@ export async function approveClassroomEvaluation(id: string, notes?: string) {
   if (error) return { success: false, error: error.message };
 
   if (updatedEval?.evaluator_id) {
-    const className = updatedEval.homerooms?.class_name || "ของคุณ";
+    const rooms: any = updatedEval.homerooms;
+    const className = rooms?.class_name || (Array.isArray(rooms) ? rooms[0]?.class_name : undefined) || "ของคุณ";
     await notifyUser(
       supabase, // Using standard client since user is authenticated
       updatedEval.evaluator_id,
@@ -472,7 +473,8 @@ export async function rejectClassroomEvaluation(id: string, notes: string) {
   if (error) return { success: false, error: error.message };
 
   if (updatedEval?.evaluator_id) {
-    const className = updatedEval.homerooms?.class_name || "ของคุณ";
+    const rooms: any = updatedEval.homerooms;
+    const className = rooms?.class_name || (Array.isArray(rooms) ? rooms[0]?.class_name : undefined) || "ของคุณ";
     await notifyUser(
       supabase,
       updatedEval.evaluator_id,

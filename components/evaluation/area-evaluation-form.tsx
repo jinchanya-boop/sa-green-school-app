@@ -62,12 +62,7 @@ export function AreaEvaluationForm({ areas, semesters, criteria, userRole, onCan
 
       if (result && result.success) {
         console.log("Success! Calling onSuccess");
-        // We will just use alert if toast is not imported just in case
-        if (typeof toast !== 'undefined' && toast.success) {
-          toast.success("บันทึกการประเมินพื้นที่เรียบร้อย");
-        } else {
-          alert("บันทึกการประเมินพื้นที่เรียบร้อย");
-        }
+        alert("บันทึกการประเมินพื้นที่เรียบร้อย");
         onSuccess();
       } else {
         console.log("Server returned error:", result?.error);

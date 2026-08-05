@@ -83,7 +83,7 @@ export function WaterBottleList({ records: initialRecords, homerooms, semesters,
   }, {} as Record<string, {total: number, count: number}>);
 
   const chartData = Object.entries(groupedByDate)
-    .map(([date, data]) => ({
+    .map(([date, data]: [string, any]) => ({
       date: formatThaiDateShort(date),
       rate: data.total / data.count,
       rawDate: date,

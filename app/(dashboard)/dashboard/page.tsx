@@ -193,7 +193,8 @@ export default async function DashboardPage() {
     }
   } catch (e) {}
 
-  const academicYear = activeSemester?.academic_years?.year || 2569; // Fallback to 2569
+  const yearData: any = activeSemester?.academic_years;
+  const academicYear = yearData?.year || (Array.isArray(yearData) ? yearData[0]?.year : undefined) || 2569; // Fallback to 2569
 
   return (
     <DashboardContent

@@ -268,7 +268,8 @@ export async function approveAreaEvaluation(evaluationId: string, percentage: nu
   if (error) return { success: false, error: error.message };
 
   if (updatedEval?.evaluator_id) {
-    const className = updatedEval.responsible_areas?.homerooms?.class_name || "ของคุณ";
+    const areas: any = updatedEval.responsible_areas;
+    const className = areas?.homerooms?.class_name || (Array.isArray(areas) ? areas[0]?.homerooms?.class_name : undefined) || "ของคุณ";
     await notifyUser(
       adminClient,
       updatedEval.evaluator_id,
@@ -308,7 +309,8 @@ export async function rejectAreaEvaluation(evaluationId: string, reason: string)
   if (error) return { success: false, error: error.message };
 
   if (updatedEval?.evaluator_id) {
-    const className = updatedEval.responsible_areas?.homerooms?.class_name || "ของคุณ";
+    const areas: any = updatedEval.responsible_areas;
+    const className = areas?.homerooms?.class_name || (Array.isArray(areas) ? areas[0]?.homerooms?.class_name : undefined) || "ของคุณ";
     await notifyUser(
       adminClient,
       updatedEval.evaluator_id,

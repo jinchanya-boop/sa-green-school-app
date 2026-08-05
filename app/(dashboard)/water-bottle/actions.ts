@@ -164,7 +164,8 @@ export async function approveWaterBottleCheck(recordId: string, notes: string) {
   if (error) return { success: false, error: error.message };
 
   if (updatedRecord?.teacher_id) {
-    const className = updatedRecord.homerooms?.class_name || "ของคุณ";
+    const rooms: any = updatedRecord.homerooms;
+    const className = rooms?.class_name || (Array.isArray(rooms) ? rooms[0]?.class_name : undefined) || "ของคุณ";
     const date = updatedRecord.check_date || "ล่าสุด";
     await notifyUser(
       adminClient,
@@ -205,7 +206,8 @@ export async function rejectWaterBottleCheck(recordId: string, reason: string) {
   if (error) return { success: false, error: error.message };
 
   if (updatedRecord?.teacher_id) {
-    const className = updatedRecord.homerooms?.class_name || "ของคุณ";
+    const rooms: any = updatedRecord.homerooms;
+    const className = rooms?.class_name || (Array.isArray(rooms) ? rooms[0]?.class_name : undefined) || "ของคุณ";
     const date = updatedRecord.check_date || "ล่าสุด";
     await notifyUser(
       adminClient,
