@@ -32,9 +32,12 @@ export function LoginForm() {
     // Auto-append domain if user enters only a username
     const loginEmail = data.email.includes("@") ? data.email : `${data.email}@sa.ac.th`;
 
+    // If user enters '1234' (which is too short for Supabase), append 'sa'
+    const finalPassword = data.password === "1234" ? "1234sa" : data.password;
+
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: loginEmail,
-      password: data.password,
+      password: finalPassword,
     });
 
     if (signInError) {
@@ -46,7 +49,7 @@ export function LoginForm() {
         // Retry login after auto-provisioning
         const { error: retryError } = await supabase.auth.signInWithPassword({
           email: loginEmail,
-          password: data.password,
+          password: finalPassword,
         });
         
         if (retryError) {

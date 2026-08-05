@@ -344,7 +344,7 @@ export async function addUser(data: { email: string; full_name: string; role: st
     // 1. Create auth user
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
-      password: data.password || "123456",
+      password: data.password || "1234sa",
       email_confirm: true,
       user_metadata: {
         full_name: data.full_name,
@@ -381,7 +381,7 @@ export async function bulkImportUsers(users: Array<{ email: string; full_name: s
       
       const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email: user.email,
-        password: user.password || "123456",
+        password: user.password || "1234sa",
         email_confirm: true,
         user_metadata: {
           full_name: user.full_name,
