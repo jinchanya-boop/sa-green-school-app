@@ -230,7 +230,7 @@ export async function submitAreaEvaluation(formData: FormData) {
           `พื้นที่ของห้อง ${homeroom.class_name} ส่งรายงานแล้ว กรุณาไปตรวจสอบและให้คะแนน`,
           "area_evaluation",
           evalData.id,
-          "/area-evaluation/approvals"
+          "/area-evaluation"
         );
       }
     }
