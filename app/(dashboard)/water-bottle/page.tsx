@@ -35,18 +35,37 @@ export default async function WaterBottlePage() {
   }
 
   const [
-    { data: records },
     { data: academicYear },
     { data: semesters }
   ] = await Promise.all([
-      supabase
-        .from("v_water_bottle_full")
-        .select("*")
-        .order("check_date", { ascending: false })
-        .limit(50),
       supabase.from("academic_years").select("id").eq("is_active", true).single(),
       supabase.from("semesters").select("*").eq("is_active", true)
     ]);
+
+  let { data: records } = await supabase
+    .from("v_water_bottle_full")
+    .select("*")
+    .order("check_date", { ascending: false })
+    .limit(50);
+
+  const { data: profile } = await supabase.from('profiles').select('role, grade_level').eq('id', user?.id).single();
+  let gradeLevels: number[] = [];
+  if (profile?.grade_level) gradeLevels.push(profile.grade_level);
+
+  const { data: gsData } = await supabase
+    .from('grade_supervisors')
+    .select('grade_level')
+    .eq('supervisor_id', user?.id);
+
+  if (gsData) {
+    gsData.forEach(gs => {
+      if (!gradeLevels.includes(gs.grade_level)) gradeLevels.push(gs.grade_level);
+    });
+  }
+
+  if (profile?.role === 'grade_supervisor' && gradeLevels.length > 0 && records) {
+    records = records.filter(r => gradeLevels.includes(r.grade_level));
+  }
 
   const activeYearId = academicYear?.id;
 

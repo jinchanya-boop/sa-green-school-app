@@ -428,6 +428,14 @@ export async function updateUserHomeroom(userId: string, homeroom_id: string | n
   return { success: true };
 }
 
+export async function updateUserGradeLevel(userId: string, grade_level: number | null) {
+  const supabaseAdmin = getAdminClient();
+  const { error } = await supabaseAdmin.from("profiles").update({ grade_level }).eq("id", userId);
+  if (error) return { success: false, error: error.message };
+  revalidatePath("/settings");
+  return { success: true };
+}
+
 export async function toggleUserActive(userId: string, is_active: boolean) {
   const supabaseAdmin = getAdminClient();
   const { error } = await supabaseAdmin.from("profiles").update({ is_active }).eq("id", userId);

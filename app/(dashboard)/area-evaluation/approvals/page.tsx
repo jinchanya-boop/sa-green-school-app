@@ -13,6 +13,21 @@ export default async function AreaApprovalPage() {
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user?.id).single();
 
+  let gradeLevels: number[] = [];
+  if (profile?.grade_level) gradeLevels.push(profile.grade_level);
+
+  // Fetch assigned grade levels from grade_supervisors table
+  const { data: gsData } = await supabase
+    .from('grade_supervisors')
+    .select('grade_level')
+    .eq('supervisor_id', user?.id);
+
+  if (gsData) {
+    gsData.forEach(gs => {
+      if (!gradeLevels.includes(gs.grade_level)) gradeLevels.push(gs.grade_level);
+    });
+  }
+
   // Fetch only submitted evaluations
   let { data: evaluations } = await supabase
     .from("v_area_evaluations_full")
@@ -22,15 +37,14 @@ export default async function AreaApprovalPage() {
 
   if (evaluations) {
     const isAdmin = profile?.role === 'administrator' || profile?.role === 'director' || profile?.role === 'deputy_director';
-    const isGradeHead = !!profile?.grade_level;
+    const isGradeHead = gradeLevels.length > 0;
 
     if (!isAdmin && isGradeHead) {
       // Filter evaluations for this grade head based on homeroom_name (e.g., "ม.1/2")
       evaluations = evaluations.filter(ev => {
         if (!ev.homeroom_name) return false;
-        // Parse grade level from string like "ม.1/2" -> "1"
         const gradeStr = ev.homeroom_name.match(/ม\.(\d+)/)?.[1];
-        return gradeStr && parseInt(gradeStr) === profile.grade_level;
+        return gradeStr && gradeLevels.includes(parseInt(gradeStr));
       });
     } else if (!isAdmin) {
       // Normal teachers shouldn't see any area approvals

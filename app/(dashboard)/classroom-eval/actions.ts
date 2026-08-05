@@ -410,7 +410,7 @@ export async function evaluateClassroomReport(evaluationId: string, formData: Fo
         `รอการอนุมัติ: ประเมินความสะอาดห้องเรียน ${room.name}`,
         "classroom_evaluation",
         evaluationId,
-        "/classroom-eval/approvals"
+        "/classroom-eval"
       );
     }
   }

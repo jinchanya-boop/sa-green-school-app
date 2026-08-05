@@ -2,7 +2,7 @@
 
 import { useState, useRef, useMemo } from "react";
 import { Users, ShieldCheck, Power, UserPlus, Upload, FileUp, Search } from "lucide-react";
-import { updateUserRole, updateUserHomeroom, toggleUserActive, addUser, bulkImportUsers } from "@/app/(dashboard)/settings/actions";
+import { updateUserRole, updateUserHomeroom, updateUserGradeLevel, toggleUserActive, addUser, bulkImportUsers } from "@/app/(dashboard)/settings/actions";
 import * as XLSX from "xlsx";
 
 const ROLES = [
@@ -43,6 +43,13 @@ export function UsersTab({ data }: { data: any }) {
   const handleHomeroomChange = async (userId: string, homeroomId: string) => {
     setLoading(true);
     const res = await updateUserHomeroom(userId, homeroomId || null);
+    if (!res.success) alert(res.error);
+    setLoading(false);
+  };
+
+  const handleGradeLevelChange = async (userId: string, gradeLevel: string) => {
+    setLoading(true);
+    const res = await updateUserGradeLevel(userId, gradeLevel ? parseInt(gradeLevel) : null);
     if (!res.success) alert(res.error);
     setLoading(false);
   };
@@ -164,7 +171,7 @@ export function UsersTab({ data }: { data: any }) {
             <tr>
               <th className="px-4 py-3 font-medium">ชื่อ-นามสกุล</th>
               <th className="px-4 py-3 font-medium">อีเมล</th>
-              <th className="px-4 py-3 font-medium">ห้องประจำชั้น</th>
+              <th className="px-4 py-3 font-medium">ความรับผิดชอบ (ห้อง/ระดับ)</th>
               <th className="px-4 py-3 font-medium">บทบาท</th>
               <th className="px-4 py-3 text-center">สถานะ</th>
               <th className="px-4 py-3 text-right">จัดการ</th>
@@ -187,17 +194,31 @@ export function UsersTab({ data }: { data: any }) {
                 </td>
                 <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{user.email}</td>
                 <td className="px-4 py-3">
-                  <select 
-                    value={user.homeroom_id || data.homeroomTeachers?.find((ht: any) => ht.teacher_id === user.id)?.homeroom_id || ""} 
-                    onChange={(e) => handleHomeroomChange(user.id, e.target.value)}
-                    disabled={loading}
-                    className="w-full min-w-[120px] px-2 py-1 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-1 focus:ring-indigo-500"
-                  >
-                    <option value="">-- ไม่ระบุ --</option>
-                    {data.homerooms.map((hr: any) => (
-                      <option key={hr.id} value={hr.id}>{hr.class_name}</option>
-                    ))}
-                  </select>
+                  {user.role === 'grade_supervisor' ? (
+                    <select
+                      value={user.grade_level || ""}
+                      onChange={(e) => handleGradeLevelChange(user.id, e.target.value)}
+                      disabled={loading}
+                      className="w-full min-w-[120px] px-2 py-1 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-1 focus:ring-indigo-500"
+                    >
+                      <option value="">-- ไม่ระบุระดับชั้น --</option>
+                      {[1, 2, 3, 4, 5, 6].map(g => (
+                        <option key={g} value={g}>ม.{g}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <select 
+                      value={user.homeroom_id || data.homeroomTeachers?.find((ht: any) => ht.teacher_id === user.id)?.homeroom_id || ""} 
+                      onChange={(e) => handleHomeroomChange(user.id, e.target.value)}
+                      disabled={loading || user.role === 'administrator'}
+                      className="w-full min-w-[120px] px-2 py-1 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+                    >
+                      <option value="">-- ไม่ระบุห้อง --</option>
+                      {data.homerooms.map((hr: any) => (
+                        <option key={hr.id} value={hr.id}>{hr.class_name}</option>
+                      ))}
+                    </select>
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   <select 
