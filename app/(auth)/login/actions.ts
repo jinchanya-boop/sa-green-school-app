@@ -29,7 +29,7 @@ export async function tryAutoProvisionStudent(identifier: string) {
     }
 
     const email = `${identifier}@sa.ac.th`;
-    const password = "saschool1234";
+    const password = "sa1234";
 
     // 2. Check if Auth user already exists by email (in case profile_id wasn't linked)
     const { data: existingUsers } = await adminClient.auth.admin.listUsers();

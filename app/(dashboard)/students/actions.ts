@@ -126,7 +126,7 @@ export async function generateStudentAccount(id: string) {
   }
 
   const email = `${identifier}@sa.ac.th`;
-  const password = "saschool1234"; // Default password as requested
+  const password = "sa1234"; // Default password as requested
 
   // Create Auth User
   const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
