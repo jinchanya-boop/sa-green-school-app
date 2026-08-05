@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Bell, CheckCheck, Trash2 } from "lucide-react";
+import Link from "next/link";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Notif = Record<string, any>;
@@ -61,37 +62,58 @@ export function NotificationsView({ notifications }: { notifications: unknown[] 
             <p className="text-sm mt-1">การแจ้งเตือนจะปรากฏที่นี่</p>
           </div>
         ) : (
-          notifs.map((n) => (
-            <motion.div
-              key={n.id}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              className={`flex items-start gap-4 p-4 rounded-2xl border transition-colors group ${
-                n.is_read
-                  ? "bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800"
-                  : "bg-blue-50 dark:bg-blue-950/30 border-blue-100 dark:border-blue-900"
-              }`}
-            >
-              <div className="text-2xl flex-shrink-0 mt-0.5">
-                {TYPE_ICONS[n.type] ?? "🔔"}
+          notifs.map((n) => {
+            const content = (
+              <div
+                className={`flex items-start gap-4 p-4 rounded-2xl border transition-colors group ${
+                  n.is_read
+                    ? "bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800"
+                    : "bg-blue-50 dark:bg-blue-950/30 border-blue-100 dark:border-blue-900"
+                } ${n.action_url ? 'hover:border-green-300 dark:hover:border-green-700 cursor-pointer' : ''}`}
+              >
+                <div className="text-2xl flex-shrink-0 mt-0.5">
+                  {TYPE_ICONS[n.type] ?? "🔔"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`font-medium text-sm ${n.is_read ? "text-gray-700 dark:text-gray-300" : "text-gray-900 dark:text-white"}`}>
+                    {n.title}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1 line-clamp-2">{n.body}</p>
+                  <p className="text-xs text-gray-300 dark:text-gray-600 mt-1.5">
+                    {n.created_at ? new Date(n.created_at).toLocaleString("th-TH") : ""}
+                  </p>
+                </div>
+                {!n.is_read && (
+                  <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-2" />
+                )}
+                <button 
+                  className="p-1.5 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all rounded-lg hover:bg-red-50 dark:hover:bg-red-950"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    // Optional: handle delete logic here if implemented later
+                  }}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className={`font-medium text-sm ${n.is_read ? "text-gray-700 dark:text-gray-300" : "text-gray-900 dark:text-white"}`}>
-                  {n.title}
-                </p>
-                <p className="text-xs text-gray-400 mt-1 line-clamp-2">{n.body}</p>
-                <p className="text-xs text-gray-300 dark:text-gray-600 mt-1.5">
-                  {n.created_at ? new Date(n.created_at).toLocaleString("th-TH") : ""}
-                </p>
-              </div>
-              {!n.is_read && (
-                <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-2" />
-              )}
-              <button className="p-1.5 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all rounded-lg hover:bg-red-50 dark:hover:bg-red-950">
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </motion.div>
-          ))
+            );
+
+            return (
+              <motion.div
+                key={n.id}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+              >
+                {n.action_url ? (
+                  <Link href={n.action_url} className="block">
+                    {content}
+                  </Link>
+                ) : (
+                  content
+                )}
+              </motion.div>
+            );
+          })
         )}
       </div>
     </motion.div>
