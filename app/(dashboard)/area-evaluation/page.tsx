@@ -23,7 +23,7 @@ export default async function AreaEvaluationPage() {
     ]);
 
   const { data: { user } } = await supabase.auth.getUser();
-  const { data: profile } = await supabase.from("profiles").select("role, homeroom_id").eq("id", user?.id).single();
+  const { data: profile } = await supabase.from("profiles").select("role, homeroom_id, grade_level").eq("id", user?.id).single();
   const userRole = profile?.role || "guest";
   const userHomeroomId = profile?.homeroom_id;
 
@@ -32,10 +32,40 @@ export default async function AreaEvaluationPage() {
     filteredAreas = filteredAreas.filter((a: any) => a.homeroom_id === userHomeroomId);
   }
 
+  // Filter evaluations for Grade Supervisors
+  let filteredEvaluations = evaluations ?? [];
+  const isAdmin = userRole === 'administrator' || userRole === 'director' || userRole === 'deputy_director';
+  const isStudentCouncil = userRole === 'student_council';
+  
+  if (!isAdmin && !isStudentCouncil && (userRole === 'grade_supervisor' || userRole === 'homeroom_teacher')) {
+    let gradeLevels: number[] = [];
+    if (profile?.grade_level) gradeLevels.push(profile.grade_level);
+
+    // Fetch assigned grade levels from grade_supervisors table
+    const { data: gsData } = await supabase
+      .from('grade_supervisors')
+      .select('grade_level')
+      .eq('supervisor_id', user?.id);
+
+    if (gsData) {
+      gsData.forEach(gs => {
+        if (!gradeLevels.includes(gs.grade_level)) gradeLevels.push(gs.grade_level);
+      });
+    }
+
+    if (gradeLevels.length > 0) {
+      filteredEvaluations = filteredEvaluations.filter(ev => {
+        if (!ev.homeroom_name) return false;
+        const gradeStr = ev.homeroom_name.match(/ม\.(\d+)/)?.[1];
+        return gradeStr && gradeLevels.includes(parseInt(gradeStr));
+      });
+    }
+  }
+
   return (
     <AreaEvaluationList
       userRole={userRole}
-      evaluations={evaluations ?? []}
+      evaluations={filteredEvaluations}
       areas={filteredAreas}
       semesters={semesters ?? []}
       criteria={criteria ?? []}

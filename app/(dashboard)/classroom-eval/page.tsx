@@ -11,9 +11,10 @@ export default async function ClassroomEvalPage() {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
-  const { data: profile } = await supabase.from("profiles").select("role, homeroom_id").eq("id", user?.id).single();
+  const { data: profile } = await supabase.from("profiles").select("role, homeroom_id, building_id").eq("id", user?.id).single();
   const role = profile?.role || "guest";
   const userHomeroomId = profile?.homeroom_id;
+  const userBuildingId = profile?.building_id;
 
   const [{ data: evaluations }, { data: rooms }, { data: semesters }, { data: criteria }] =
     await Promise.all([
@@ -22,7 +23,7 @@ export default async function ClassroomEvalPage() {
         .select("*")
         .order("created_at", { ascending: false })
         .limit(50),
-      supabase.from("rooms").select("id, name, homerooms(id, class_name)").eq("is_active", true).order("name"),
+      supabase.from("rooms").select("id, name, building_id, homerooms(id, class_name)").eq("is_active", true).order("name"),
       supabase.from("semesters").select("*").eq("is_active", true),
       supabase.from("evaluation_criteria").select("*").eq("module", "classroom").order("sort_order", { ascending: true })
     ]);
@@ -40,9 +41,23 @@ export default async function ClassroomEvalPage() {
     mappedRooms = mappedRooms.filter(r => r.homeroom_id === userHomeroomId);
   }
 
+  // Filter evaluations for Building Supervisors
+  let filteredEvaluations = evaluations ?? [];
+  const isAdmin = role === 'administrator' || role === 'director' || role === 'deputy_director';
+  const isStudentCouncil = role === 'student_council';
+
+  if (!isAdmin && !isStudentCouncil && role === 'building_supervisor' && userBuildingId) {
+    // Find all room IDs in this building
+    const allowedRoomIds = mappedRooms
+      .filter(r => r.building_id === userBuildingId)
+      .map(r => r.id);
+
+    filteredEvaluations = filteredEvaluations.filter(ev => allowedRoomIds.includes(ev.room_id));
+  }
+
   return (
     <ClassroomEvalList
-      evaluations={evaluations ?? []}
+      evaluations={filteredEvaluations}
       rooms={mappedRooms}
       semesters={semesters ?? []}
       criteria={criteria ?? []}
