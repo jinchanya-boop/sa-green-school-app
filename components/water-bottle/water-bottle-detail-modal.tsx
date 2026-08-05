@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { X, Check, XCircle, Droplets, Save } from "lucide-react";
+import { X, Check, XCircle, Droplets, Save, FileText } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { formatThaiDateShort, GRADE_BG, calculateGrade, STATUS_COLORS, STATUS_LABELS } from "@/lib/utils";
@@ -76,7 +76,7 @@ export function WaterBottleDetailModal({ record, userRole, onClose }: WaterBottl
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        className="w-full max-w-2xl bg-white dark:bg-gray-900 rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-gray-100 dark:border-gray-800"
+        className="w-full max-w-2xl bg-white dark:bg-gray-900 rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-gray-100 dark:border-gray-800 print:max-h-none print:shadow-none print:w-full print:border-none"
       >
         {/* Header */}
         <div className="flex items-start justify-between p-6 border-b border-gray-100 dark:border-gray-800">
@@ -88,16 +88,23 @@ export function WaterBottleDetailModal({ record, userRole, onClose }: WaterBottl
               วันที่ {record.check_date ? formatThaiDateShort(record.check_date) : "—"} • ตรวจโดย {record.teacher_name}
             </p>
           </div>
-          <button 
-            onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2 no-print">
+            {record.status === 'approved' && (
+              <button onClick={() => window.print()} className="px-3 py-1.5 bg-cyan-50 text-cyan-600 hover:bg-cyan-100 dark:bg-cyan-900/30 dark:text-cyan-400 dark:hover:bg-cyan-900/50 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-colors">
+                <FileText className="w-4 h-4" /> PDF
+              </button>
+            )}
+            <button 
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 print:overflow-visible print:h-auto">
           <div className="grid grid-cols-2 gap-4">
             <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-800">
               <p className="text-sm text-gray-500 mb-1">ผลการตรวจสอบ</p>

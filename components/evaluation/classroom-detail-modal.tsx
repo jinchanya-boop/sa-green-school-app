@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { X, Image as ImageIcon, Save } from "lucide-react";
+import { X, CheckCircle, Clock, AlertTriangle, MessageSquare, Image as ImageIcon, Camera, Star, StarHalf, FileText, Save } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import imageCompression from "browser-image-compression";
 import { calculateGrade, formatThaiDate } from "@/lib/utils";
@@ -120,7 +120,7 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col print:max-h-none print:shadow-none print:w-full print:border-none"
       >
         <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
           <div>
@@ -131,9 +131,16 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
               รายงานโดย {evaluation.reporter_name || "—"} {evaluation.evaluator_name && `• ประเมินโดย ${evaluation.evaluator_name}`} • สัปดาห์ที่ {evaluation.eval_week}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg">
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2 no-print">
+            {evaluation.status === 'approved' && (
+              <button onClick={() => window.print()} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-colors">
+                <FileText className="w-4 h-4" /> PDF
+              </button>
+            )}
+            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -142,7 +149,7 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-8">
+        <div className="flex-1 overflow-y-auto p-6 space-y-8 print:overflow-visible print:h-auto">
           
           {/* Grading / Scoring */}
           {needsScoring ? (
@@ -311,7 +318,7 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
           )}
         </div>
 
-        <div className="p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/30 flex justify-end gap-3">
+        <div className="p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/30 flex justify-end gap-3 no-print">
           <button
             onClick={onClose}
             className="px-5 py-2.5 rounded-xl font-medium text-gray-700 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
@@ -337,7 +344,7 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
         </div>
 
         {needsApproval && (
-          <div className="p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+          <div className="p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 no-print">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               ความคิดเห็นเพิ่มเติม / เหตุผลที่ไม่อนุมัติ (ถ้ามี)
             </label>

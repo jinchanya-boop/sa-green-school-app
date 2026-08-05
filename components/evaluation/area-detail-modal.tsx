@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { X, Image as ImageIcon, Save } from "lucide-react";
+import { X, Image as ImageIcon, Save, FileText } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { calculateGrade, formatThaiDate } from "@/lib/utils";
 import imageCompression from "browser-image-compression";
@@ -113,7 +113,7 @@ export function AreaDetailModal({ evaluation, userRole, criteria = [], onClose }
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col print:max-h-none print:shadow-none print:w-full print:border-none"
       >
         <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
           <div>
@@ -124,9 +124,16 @@ export function AreaDetailModal({ evaluation, userRole, criteria = [], onClose }
               รายงานโดย {evaluation.reporter_name || "—"} {evaluation.evaluator_name && `• ประเมินโดย ${evaluation.evaluator_name}`} • สัปดาห์ที่ {evaluation.eval_week}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg">
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2 no-print">
+            {evaluation.status === 'approved' && (
+              <button onClick={() => window.print()} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-colors">
+                <FileText className="w-4 h-4" /> PDF
+              </button>
+            )}
+            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -135,9 +142,7 @@ export function AreaDetailModal({ evaluation, userRole, criteria = [], onClose }
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-8">
-          {/* Grading is moved above photos */}
-          {/* Grading */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-8 print:overflow-visible print:h-auto">
           {needsScoring ? (
             <form id="scoring-form" onSubmit={handleSubmitScores} className="space-y-4">
               <h3 className="font-medium text-blue-600 dark:text-blue-400 pb-2 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
@@ -216,7 +221,6 @@ export function AreaDetailModal({ evaluation, userRole, criteria = [], onClose }
                 </div>
               </div>
               
-              {/* Detailed Item Scores */}
               {items && items.length > 0 && (
                 <div className="mt-6 space-y-3">
                   <h4 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">รายละเอียดคะแนนรายข้อ</h4>
@@ -252,7 +256,6 @@ export function AreaDetailModal({ evaluation, userRole, criteria = [], onClose }
             </div>
           )}
 
-          {/* Photos */}
           <div className="mt-8 space-y-6">
             <h3 className="font-medium text-gray-900 dark:text-white pb-2 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
               <ImageIcon className="w-5 h-5 text-blue-500" />
@@ -269,7 +272,6 @@ export function AreaDetailModal({ evaluation, userRole, criteria = [], onClose }
               </div>
             ) : (
               <div className="space-y-6">
-                {/* Student Photos */}
                 {photos.some(p => p.caption === 'class_rep') && (
                   <div>
                     <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">ภาพจากตัวแทนห้อง (นักเรียน)</h4>
@@ -283,7 +285,6 @@ export function AreaDetailModal({ evaluation, userRole, criteria = [], onClose }
                   </div>
                 )}
                 
-                {/* Student Council Photos */}
                 {photos.some(p => p.caption === 'student_council') && (
                   <div>
                     <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">ภาพจากองค์กรนักเรียน</h4>
@@ -297,7 +298,6 @@ export function AreaDetailModal({ evaluation, userRole, criteria = [], onClose }
                   </div>
                 )}
                 
-                {/* Legacy/Other Photos without explicit caption */}
                 {photos.some(p => p.caption !== 'class_rep' && p.caption !== 'student_council') && (
                   <div>
                     <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">ภาพอื่นๆ</h4>
@@ -314,7 +314,6 @@ export function AreaDetailModal({ evaluation, userRole, criteria = [], onClose }
             )}
           </div>
 
-          {/* Notes */}
           {evaluation.approver_notes && (
             <div className="space-y-2 mt-8">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">

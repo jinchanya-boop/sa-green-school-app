@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { Users, ShieldCheck, Power, UserPlus, Upload, FileUp } from "lucide-react";
+import { useState, useRef, useMemo } from "react";
+import { Users, ShieldCheck, Power, UserPlus, Upload, FileUp, Search } from "lucide-react";
 import { updateUserRole, updateUserHomeroom, toggleUserActive, addUser, bulkImportUsers } from "@/app/(dashboard)/settings/actions";
 import * as XLSX from "xlsx";
 
@@ -21,7 +21,17 @@ const ROLES = [
 export function UsersTab({ data }: { data: any }) {
   const [loading, setLoading] = useState(false);
   const [isAddingUser, setIsAddingUser] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const filteredUsers = useMemo(() => {
+    if (!searchTerm.trim()) return data.profiles;
+    const term = searchTerm.toLowerCase();
+    return data.profiles.filter((user: any) => 
+      (user.full_name && user.full_name.toLowerCase().includes(term)) ||
+      (user.email && user.email.toLowerCase().includes(term))
+    );
+  }, [data.profiles, searchTerm]);
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     setLoading(true);
@@ -135,6 +145,19 @@ export function UsersTab({ data }: { data: any }) {
           </div>
         </div>
 
+        <div className="relative mb-4">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="ค้นหาตามชื่อ หรือ อีเมล..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white sm:text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+          />
+        </div>
+
       <div className="border border-gray-100 dark:border-gray-800 rounded-xl overflow-x-auto">
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap">
@@ -148,7 +171,7 @@ export function UsersTab({ data }: { data: any }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {data.profiles.map((user: any) => (
+            {filteredUsers.map((user: any) => (
               <tr key={user.id} className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${!user.is_active ? "opacity-60" : ""}`}>
                 <td className="px-4 py-3 font-medium whitespace-nowrap">
                   <div className="flex items-center gap-2">
