@@ -8,9 +8,10 @@ import { type Profile } from "@/types";
 interface DashboardShellProps {
   children: React.ReactNode;
   profile: Profile | null;
+  unreadCount?: number;
 }
 
-export function DashboardShell({ children, profile }: DashboardShellProps) {
+export function DashboardShell({ children, profile, unreadCount = 0 }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -36,6 +37,7 @@ export function DashboardShell({ children, profile }: DashboardShellProps) {
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
         profile={profile}
+        unreadCount={unreadCount}
       />
 
       {/* Mobile overlay */}
@@ -57,6 +59,7 @@ export function DashboardShell({ children, profile }: DashboardShellProps) {
             }
           }}
           profile={profile}
+          unreadCount={unreadCount}
         />
 
         <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">

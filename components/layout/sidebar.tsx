@@ -111,9 +111,10 @@ interface SidebarProps {
   mobileOpen: boolean;
   onMobileClose: () => void;
   profile: Profile | null;
+  unreadCount?: number;
 }
 
-export function Sidebar({ collapsed, mobileOpen, onMobileClose, profile }: SidebarProps) {
+export function Sidebar({ collapsed, mobileOpen, onMobileClose, profile, unreadCount = 0 }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -207,8 +208,13 @@ export function Sidebar({ collapsed, mobileOpen, onMobileClose, profile }: Sideb
                 )}
               </AnimatePresence>
               {!collapsed && item.badge && (
-                <span className="text-[10px] font-bold bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 px-1.5 py-0.5 rounded-md">
+                <span className="text-[10px] font-bold bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 px-1.5 py-0.5 rounded-md ml-auto">
                   {item.badge}
+                </span>
+              )}
+              {!collapsed && item.href === "/notifications" && unreadCount > 0 && (
+                <span className="ml-auto min-w-[20px] h-5 px-1.5 text-xs font-bold bg-red-500 text-white flex items-center justify-center rounded-md shadow-sm">
+                  {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
               {isActive && (

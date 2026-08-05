@@ -36,6 +36,17 @@ export default async function DashboardLayout({
       role: "administrator" 
     };
   }
+  // Fetch unread notifications count
+  let unreadNotificationsCount = 0;
+  if (user) {
+    const { count } = await supabase
+      .from("notifications")
+      .select("*", { count: 'exact', head: true })
+      .eq("recipient_id", user.id)
+      .eq("is_read", false);
+    
+    unreadNotificationsCount = count ?? 0;
+  }
 
-  return <DashboardShell profile={profile}>{children}</DashboardShell>;
+  return <DashboardShell profile={profile} unreadCount={unreadNotificationsCount}>{children}</DashboardShell>;
 }

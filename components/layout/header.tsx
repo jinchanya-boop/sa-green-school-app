@@ -8,9 +8,10 @@ import { type Profile } from "@/types";
 interface HeaderProps {
   onToggleSidebar: () => void;
   profile: Profile | null;
+  unreadCount?: number;
 }
 
-export function Header({ onToggleSidebar, profile }: HeaderProps) {
+export function Header({ onToggleSidebar, profile, unreadCount = 0 }: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -80,7 +81,11 @@ export function Header({ onToggleSidebar, profile }: HeaderProps) {
         >
           <Bell className="w-5 h-5" />
           {/* Notification badge */}
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-gray-900 animate-pulse" />
+          {unreadCount > 0 && (
+            <span className="absolute top-0 right-0 min-w-[16px] h-4 px-1 text-[10px] font-bold bg-red-500 text-white flex items-center justify-center rounded-full ring-2 ring-white dark:ring-gray-900 shadow-sm animate-in zoom-in duration-300">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
         </button>
 
         {/* Avatar */}
