@@ -204,7 +204,7 @@ export async function submitAreaEvaluation(formData: FormData) {
           `รอการประเมิน: พื้นที่ของห้อง ${className}`,
           "area_evaluation",
           evalData.id,
-          "/area-evaluation"
+          "/area-evaluation/approvals"
         );
       }
     }

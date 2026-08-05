@@ -131,7 +131,7 @@ export async function submitWaterBottleCheck(formData: FormData) {
       `รอการรับทราบ: บันทึกข้อมูลแก้วน้ำส่วนตัวของห้อง ${hrData.class_name}`,
       "water_bottle",
       recordData.id,
-      "/water-bottle"
+      "/water-bottle/approvals"
     );
   }
 

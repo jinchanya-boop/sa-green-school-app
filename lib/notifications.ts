@@ -15,14 +15,33 @@ export async function notifyGradeHead(
     .eq("grade_level", gradeLevel)
     .in("role", ["grade_supervisor", "homeroom_teacher", "building_supervisor"]);
 
-  if (!heads || heads.length === 0) return;
+  const { data: gsData } = await adminClient
+    .from("grade_supervisors")
+    .select("supervisor_id")
+    .eq("grade_level", gradeLevel);
 
-  // Prefer grade_supervisor if multiple exist, otherwise notify all with the grade_level
-  const gradeSupervisors = heads.filter((h: any) => h.role === "grade_supervisor");
-  const targets = gradeSupervisors.length > 0 ? gradeSupervisors : heads;
+  const targets = new Set<string>();
 
-  const notifications = targets.map((h: any) => ({
-    recipient_id: h.id,
+  if (heads) {
+    heads.forEach((h: any) => {
+      if (h.role === "grade_supervisor") {
+        targets.add(h.id);
+      }
+    });
+  }
+
+  if (gsData) {
+    gsData.forEach((gs: any) => targets.add(gs.supervisor_id));
+  }
+
+  if (targets.size === 0 && heads && heads.length > 0) {
+    heads.forEach((h: any) => targets.add(h.id));
+  }
+
+  if (targets.size === 0) return;
+
+  const notifications = Array.from(targets).map((id) => ({
+    recipient_id: id,
     title,
     body,
     entity_type: entityType,
@@ -50,13 +69,34 @@ export async function notifyBuildingHead(
     .eq("building_id", buildingId)
     .in("role", ["building_supervisor", "grade_supervisor", "homeroom_teacher"]);
 
-  if (!heads || heads.length === 0) return;
+  const { data: buildingData } = await adminClient
+    .from("buildings")
+    .select("supervisor_id")
+    .eq("id", buildingId)
+    .single();
 
-  const buildingSupervisors = heads.filter((h: any) => h.role === "building_supervisor");
-  const targets = buildingSupervisors.length > 0 ? buildingSupervisors : heads;
+  const targets = new Set<string>();
 
-  const notifications = targets.map((h: any) => ({
-    recipient_id: h.id,
+  if (buildingData?.supervisor_id) {
+    targets.add(buildingData.supervisor_id);
+  }
+
+  if (heads) {
+    heads.forEach((h: any) => {
+      if (h.role === "building_supervisor") {
+        targets.add(h.id);
+      }
+    });
+  }
+
+  if (targets.size === 0 && heads && heads.length > 0) {
+    heads.forEach((h: any) => targets.add(h.id));
+  }
+
+  if (targets.size === 0) return;
+
+  const notifications = Array.from(targets).map((id) => ({
+    recipient_id: id,
     title,
     body,
     entity_type: entityType,
