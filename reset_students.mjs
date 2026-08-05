@@ -19,23 +19,14 @@ async function run() {
     return;
   }
 
-  console.log(`Found ${students.length} students with accounts. Updating passwords...`);
+  console.log(`Found ${students.length} students with accounts. Updating passwords to sa1234...`);
   
   let success = 0;
   let failed = 0;
 
   for (const st of students) {
-    // Determine the identifier used as password
-    const identifier = st.national_id || st.student_number;
-    let newPassword = identifier.length < 6 ? `${identifier}sa` : identifier;
-
-    // Supabase requires minimum 6 characters. If it's still less than 6, append more 'sa' or pad it
-    while (newPassword.length < 6) {
-      newPassword += 'sa';
-    }
-
     const { error } = await supabase.auth.admin.updateUserById(st.profile_id, {
-      password: newPassword
+      password: "sa1234"
     });
 
     if (error) {
@@ -46,7 +37,7 @@ async function run() {
     }
   }
 
-  console.log(`Done! Successfully updated ${success} students. Failed: ${failed}`);
+  console.log(`Done! Successfully updated ${success} students to use sa1234. Failed: ${failed}`);
 }
 
 run();

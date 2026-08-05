@@ -45,7 +45,7 @@ export function LoginForm() {
     if (signInError) {
       // If login fails, try to auto-provision if it's a student ID
       const identifier = data.email.split("@")[0];
-      const provisionRes = await tryAutoProvisionStudent(identifier, finalPassword);
+      const provisionRes = await tryAutoProvisionStudent(identifier);
       
       if (provisionRes?.success) {
         // Retry login after auto-provisioning

@@ -3,7 +3,7 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 // Helper to auto-provision student accounts on first login attempt
-export async function tryAutoProvisionStudent(identifier: string, providedPassword?: string) {
+export async function tryAutoProvisionStudent(identifier: string) {
   try {
     const adminClient = createSupabaseClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,8 +29,8 @@ export async function tryAutoProvisionStudent(identifier: string, providedPasswo
     }
 
     const email = `${identifier}@sa.ac.th`;
-    // Use provided password or fallback to identifier with "sa" appended if it's too short
-    const password = providedPassword || (identifier.length < 6 ? `${identifier}sa` : identifier);
+    // Password is fixed to sa1234 for all students
+    const password = "sa1234";
 
     // 2. Check if Auth user already exists by email (in case profile_id wasn't linked)
     const { data: existingUsers } = await adminClient.auth.admin.listUsers();
