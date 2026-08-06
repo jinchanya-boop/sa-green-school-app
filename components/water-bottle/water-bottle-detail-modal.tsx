@@ -47,7 +47,7 @@ export function WaterBottleDetailModal({ record, userRole, onClose }: WaterBottl
     setApproving(true);
     const result = await approveWaterBottleCheck(record.id, rejectNotes);
     if (result.success) {
-      onClose();
+      window.location.reload();
     } else {
       alert("Error: " + result.error);
       setApproving(false);
@@ -63,7 +63,7 @@ export function WaterBottleDetailModal({ record, userRole, onClose }: WaterBottl
     setApproving(true);
     const result = await rejectWaterBottleCheck(record.id, rejectNotes);
     if (result.success) {
-      onClose();
+      window.location.reload();
     } else {
       alert("Error: " + result.error);
       setApproving(false);
@@ -71,12 +71,32 @@ export function WaterBottleDetailModal({ record, userRole, onClose }: WaterBottl
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-gray-900/40 dark:bg-gray-900/60 backdrop-blur-sm">
+    <>
+      {/* Backdrop (hidden in print) */}
+      <div className="fixed inset-0 z-40 bg-gray-900/40 dark:bg-gray-900/60 backdrop-blur-sm print:hidden"></div>
+
+      {/* Modal Container */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 print:absolute print:inset-0 print:p-0 print:block print:bg-white print:z-[99999] print:h-auto print:min-h-screen">
+        
+        <style>{`
+          @media print {
+            html, body {
+              height: auto !important;
+              overflow: visible !important;
+              background-color: white !important;
+              font-family: 'TH SarabunPSK', 'Sarabun', sans-serif !important;
+            }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            @page { size: A4; margin: 15mm; }
+            .print-content-fit { page-break-inside: avoid; }
+          }
+        `}</style>
+
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        className="w-full max-w-2xl bg-white dark:bg-gray-900 rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-gray-100 dark:border-gray-800 print:max-h-none print:shadow-none print:w-full print:border-none"
+        className="w-full max-w-2xl bg-white dark:bg-gray-900 rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-gray-100 dark:border-gray-800 print:hidden"
       >
         {/* Header */}
         <div className="flex items-start justify-between p-6 border-b border-gray-100 dark:border-gray-800">
@@ -208,6 +228,62 @@ export function WaterBottleDetailModal({ record, userRole, onClose }: WaterBottl
           </div>
         )}
       </motion.div>
-    </div>
+
+      {/* Print View */}
+      <div className="hidden print:block bg-white text-black w-full min-h-screen px-4 py-2 font-sarabun text-base leading-snug">
+        <div className="text-center mb-3">
+          <img src="/logo.png" alt="School Logo" className="w-16 h-16 mx-auto mb-1 object-contain" />
+          <h1 className="text-2xl font-bold text-black leading-tight">รายงานการตรวจการพกแก้วน้ำ</h1>
+          <h2 className="text-xl font-bold text-black mb-2">โรงเรียนสา จังหวัดน่าน</h2>
+          
+          <div className="flex justify-center gap-8 text-lg font-medium">
+            <span>ห้องเรียน: {record.class_name}</span>
+            <span>วันที่ตรวจ: {record.check_date ? formatThaiDateShort(record.check_date) : "—"}</span>
+          </div>
+          <div className="flex justify-center gap-8 text-lg">
+            <span>ตรวจโดย: {record.teacher_name}</span>
+          </div>
+        </div>
+
+        <div className="mb-4 flex justify-between items-end border-b-2 border-black pb-1">
+          <h3 className="text-xl font-bold">รายชื่อนักเรียนและผลการตรวจสอบ</h3>
+          <div className="text-lg font-bold">
+            สถิติพกแก้วน้ำ: {record.percentage}% ({record.students_with_bottle}/{record.students_present} คน)
+          </div>
+        </div>
+        
+        <table className="w-full text-lg mb-4 border-collapse">
+          <thead>
+            <tr className="border-b border-gray-400 font-bold">
+              <th className="py-1 text-left w-16">เลขที่</th>
+              <th className="py-1 text-left">ชื่อ-นามสกุล</th>
+              <th className="py-1 text-center w-24">พกแก้วน้ำ</th>
+              <th className="py-1 text-center w-24">ลา</th>
+              <th className="py-1 text-center w-24">ขาดเรียน</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item) => (
+              <tr key={item.id} className="border-b border-gray-200">
+                <td className="py-1">{item.students?.student_number}</td>
+                <td className="py-1">{item.students?.first_name} {item.students?.last_name}</td>
+                <td className="py-1 text-center">{item.has_bottle ? "✓" : "-"}</td>
+                <td className="py-1 text-center">{item.is_leave ? "✓" : "-"}</td>
+                <td className="py-1 text-center">{item.is_absent ? "✓" : "-"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        
+        {record.reject_notes && record.status === "rejected" && (
+          <div className="mb-3">
+            <p className="font-bold mb-0.5">เหตุผลที่ไม่อนุมัติ:</p>
+            <p className="text-sm">{record.reject_notes}</p>
+          </div>
+        )}
+      </div>
+
+      </div>
+    </>
   );
 }

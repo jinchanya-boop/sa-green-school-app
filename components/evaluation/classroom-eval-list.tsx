@@ -67,7 +67,7 @@ export function ClassroomEvalList({ evaluations, rooms, semesters, criteria, use
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="space-y-6"
+            className={`space-y-6 ${selectedDetail ? 'print:hidden' : ''}`}
           >
             {/* Modern Hero Section */}
             <motion.div variants={itemVariants} className="bg-gradient-to-br from-purple-50 to-indigo-100/50 dark:from-purple-950/20 dark:to-indigo-900/10 rounded-3xl p-6 sm:p-8 border border-purple-100/50 dark:border-purple-900/30 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden shadow-sm">
@@ -311,7 +311,7 @@ export function ClassroomEvalList({ evaluations, rooms, semesters, criteria, use
             </motion.div>
 
             {/* Bottom Widget: Student Achievement */}
-            <motion.div variants={itemVariants} className="mt-8">
+            <motion.div variants={itemVariants} className="mt-8 print:hidden">
               <div className="bg-gradient-to-r from-purple-500 to-indigo-500 rounded-3xl p-6 text-white shadow-lg shadow-purple-500/20 relative overflow-hidden flex items-center gap-6">
                 <div className="absolute -right-10 -top-10 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
                 <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center flex-shrink-0 border border-white/20">

@@ -83,7 +83,7 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
       const result = await evaluateClassroomReport(evaluation.id, formData);
       
       if (result.success) {
-        onClose(); // Close on success
+        window.location.reload();
       } else {
         setError(result.error || "เกิดข้อผิดพลาดในการบันทึก");
         setSubmitting(false);
@@ -99,7 +99,7 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
     setApproving(true);
     const result = await approveClassroomEvaluation(evaluation.id, rejectNotes);
     setApproving(false);
-    if (result.success) onClose();
+    if (result.success) window.location.reload();
     else alert(result.error);
   };
 
@@ -111,7 +111,7 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
     setApproving(true);
     const result = await rejectClassroomEvaluation(evaluation.id, rejectNotes);
     setApproving(false);
-    if (result.success) onClose();
+    if (result.success) window.location.reload();
     else alert(result.error);
   };
 

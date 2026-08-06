@@ -74,7 +74,7 @@ export function AreaDetailModal({ evaluation, userRole, criteria = [], onClose }
       const result = await evaluateAreaReport(evaluation.id, formData);
       
       if (result.success) {
-        onClose();
+        window.location.reload();
       } else {
         setError(result.error || "เกิดข้อผิดพลาดในการบันทึก");
         setSubmitting(false);
@@ -92,7 +92,7 @@ export function AreaDetailModal({ evaluation, userRole, criteria = [], onClose }
     const grade = calculateGrade(percentage);
     const result = await approveAreaEvaluation(evaluation.id, percentage, grade, rejectNotes);
     setApproving(false);
-    if (result.success) onClose();
+    if (result.success) window.location.reload();
     else alert(result.error);
   };
 
@@ -104,16 +104,37 @@ export function AreaDetailModal({ evaluation, userRole, criteria = [], onClose }
     setApproving(true);
     const result = await rejectAreaEvaluation(evaluation.id, rejectNotes);
     setApproving(false);
-    if (result.success) onClose();
+    if (result.success) window.location.reload();
     else alert(result.error);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <>
+      {/* Backdrop (hidden in print) */}
+      <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm print:hidden"></div>
+
+      {/* Modal Container */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 print:absolute print:inset-0 print:p-0 print:block print:bg-white print:z-[99999] print:h-auto print:min-h-screen">
+        
+        <style>{`
+          @media print {
+            html, body {
+              height: auto !important;
+              overflow: visible !important;
+              background-color: white !important;
+              font-family: 'TH SarabunPSK', 'Sarabun', sans-serif !important;
+            }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            @page { size: A4; margin: 15mm; }
+            .print-content-fit { page-break-inside: avoid; }
+          }
+        `}</style>
+
+        {/* Web View */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col print:max-h-none print:shadow-none print:w-full print:border-none"
+        className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col print:hidden"
       >
         <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
           <div>
@@ -383,6 +404,80 @@ export function AreaDetailModal({ evaluation, userRole, criteria = [], onClose }
           </div>
         )}
       </motion.div>
-    </div>
+
+      {/* Print View */}
+      <div className="hidden print:block bg-white text-black w-full min-h-screen px-4 py-2 font-sarabun text-base leading-snug">
+        <div className="text-center mb-3">
+          <img src="/logo.png" alt="School Logo" className="w-16 h-16 mx-auto mb-1 object-contain" />
+          <h1 className="text-2xl font-bold text-black leading-tight">รายงานผลการประเมินพื้นที่รับผิดชอบ</h1>
+          <h2 className="text-xl font-bold text-black mb-2">โรงเรียนสา จังหวัดน่าน</h2>
+          
+          <div className="flex justify-center gap-8 text-lg font-medium">
+            <span>พื้นที่รับผิดชอบ: {evaluation.area_name}</span>
+            <span>สัปดาห์ที่: {evaluation.eval_week}</span>
+          </div>
+          <div className="flex justify-center gap-8 text-lg">
+            <span>รายงานโดย: {evaluation.reporter_name || "—"}</span>
+            {evaluation.evaluator_name && <span>ประเมินโดย: {evaluation.evaluator_name}</span>}
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <div className="flex justify-between items-end border-b-2 border-black pb-1 mb-2">
+             <h3 className="text-xl font-bold">รายละเอียดคะแนน</h3>
+             <div className="text-lg font-bold">
+               คะแนนรวม: {evaluation.total_score} / {evaluation.max_score} 
+               <span className="font-normal ml-2">
+                 ({(Number(evaluation.total_score) / Number(evaluation.max_score) * 100).toFixed(2)}% - {calculateGrade((Number(evaluation.total_score) / Number(evaluation.max_score)) * 100).toUpperCase()})
+               </span>
+             </div>
+          </div>
+          
+          <table className="w-full text-lg mb-2 border-collapse">
+            <tbody>
+              {items && items.map((item, idx) => {
+                const c = criteria.find(c => c.id === item.criteria_id);
+                return (
+                <tr key={item.id} className="border-b border-gray-200">
+                  <td className="py-1.5 pr-3 w-8 text-center font-medium">{idx + 1}.</td>
+                  <td className="py-1.5">
+                    {c?.name || 'เกณฑ์การประเมิน'}
+                    {item.notes && <span className="block text-xs text-gray-500">หมายเหตุ: {item.notes}</span>}
+                  </td>
+                  <td className="py-1.5 text-right font-bold w-20">{item.score} / {item.max_score}</td>
+                </tr>
+              )})}
+            </tbody>
+          </table>
+
+          {evaluation.approver_notes && (
+            <div className="mb-3">
+              <p className="font-bold mb-0.5">ความคิดเห็นจากผู้อนุมัติ:</p>
+              <p className="text-sm">{evaluation.approver_notes}</p>
+            </div>
+          )}
+        </div>
+
+        {photos.length > 0 && (
+          <div className="print-content-fit">
+            <h3 className="text-xl font-bold border-b border-black pb-1 mb-2">ภาพถ่ายประกอบ</h3>
+            <div className="grid grid-cols-4 gap-2">
+              {photos.map(p => (
+                <div key={p.id}>
+                  <img src={p.public_url} alt="ภาพประกอบ" className="w-full h-24 object-cover rounded-md" />
+                  {p.caption && (
+                     <div className="text-center text-xs mt-1 text-gray-700">
+                       {p.caption === 'class_rep' ? 'ตัวแทนห้อง' : p.caption === 'student_council' ? 'องค์กรนักเรียน' : 'เพิ่มเติม'}
+                     </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      </div>
+    </>
   );
 }

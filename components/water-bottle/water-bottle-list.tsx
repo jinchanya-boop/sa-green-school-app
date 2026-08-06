@@ -110,7 +110,7 @@ export function WaterBottleList({ records: initialRecords, homerooms, semesters,
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="space-y-6"
+            className={`space-y-6 ${selectedRecord ? 'print:hidden' : ''}`}
           >
             {/* Modern Hero Section */}
             <motion.div variants={itemVariants} className="bg-gradient-to-br from-cyan-50 to-blue-100/50 dark:from-cyan-950/20 dark:to-blue-900/10 rounded-3xl p-6 sm:p-8 border border-cyan-100/50 dark:border-cyan-900/30 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden shadow-sm">
