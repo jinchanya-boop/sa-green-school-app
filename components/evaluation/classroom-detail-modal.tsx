@@ -393,26 +393,26 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
       </motion.div>
 
       {/* Print View */}
-      <div className="hidden print:block bg-white text-black w-full min-h-screen px-8 py-4 font-sarabun text-lg">
-        <div className="text-center mb-6">
-          <img src="/logo.png" alt="School Logo" className="w-20 h-20 mx-auto mb-2 object-contain" />
-          <h1 className="text-3xl font-bold text-black leading-tight">รายงานผลการประเมินความสะอาดห้องเรียน</h1>
-          <h2 className="text-2xl font-bold text-black mb-4">โรงเรียนสา จังหวัดน่าน</h2>
+      <div className="hidden print:block bg-white text-black w-full min-h-screen px-4 py-2 font-sarabun text-base leading-snug">
+        <div className="text-center mb-3">
+          <img src="/logo.png" alt="School Logo" className="w-16 h-16 mx-auto mb-1 object-contain" />
+          <h1 className="text-2xl font-bold text-black leading-tight">รายงานผลการประเมินความสะอาดห้องเรียน</h1>
+          <h2 className="text-xl font-bold text-black mb-2">โรงเรียนสา จังหวัดน่าน</h2>
           
-          <div className="flex justify-center gap-12 text-xl font-medium">
+          <div className="flex justify-center gap-8 text-lg font-medium">
             <span>ห้องเรียน: {evaluation.room_name}</span>
             <span>สัปดาห์ที่: {evaluation.eval_week}</span>
           </div>
-          <div className="flex justify-center gap-12 text-xl mt-1">
+          <div className="flex justify-center gap-8 text-lg">
             <span>รายงานโดย: {evaluation.reporter_name || "—"}</span>
             {evaluation.evaluator_name && <span>ประเมินโดย: {evaluation.evaluator_name}</span>}
           </div>
         </div>
 
-        <div className="mb-6">
-          <div className="flex justify-between items-end border-b-2 border-black pb-2 mb-4">
-             <h3 className="text-2xl font-bold">รายละเอียดคะแนน</h3>
-             <div className="text-xl font-bold">
+        <div className="mb-4">
+          <div className="flex justify-between items-end border-b-2 border-black pb-1 mb-2">
+             <h3 className="text-xl font-bold">รายละเอียดคะแนน</h3>
+             <div className="text-lg font-bold">
                คะแนนรวม: {evaluation.total_score} / {evaluation.max_score || 30} 
                <span className="font-normal ml-2">
                  ({(Number(evaluation.total_score) / (Number(evaluation.max_score) || 30) * 100).toFixed(2)}% - {calculateGrade((Number(evaluation.total_score) / (Number(evaluation.max_score) || 30)) * 100).toUpperCase()})
@@ -420,38 +420,38 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
              </div>
           </div>
           
-          <table className="w-full text-xl mb-4 border-collapse">
+          <table className="w-full text-lg mb-2 border-collapse">
             <tbody>
               {evalItems.map((item, idx) => (
                 <tr key={item.id} className="border-b border-gray-200">
-                  <td className="py-2 pr-4 w-10 text-center font-medium">{idx + 1}.</td>
-                  <td className="py-2">
+                  <td className="py-1.5 pr-3 w-8 text-center font-medium">{idx + 1}.</td>
+                  <td className="py-1.5">
                     {item.evaluation_criteria?.name}
-                    {item.notes && <span className="block text-sm text-gray-500">หมายเหตุ: {item.notes}</span>}
+                    {item.notes && <span className="block text-xs text-gray-500">หมายเหตุ: {item.notes}</span>}
                   </td>
-                  <td className="py-2 text-right font-bold w-24">{item.score} / {item.max_score}</td>
+                  <td className="py-1.5 text-right font-bold w-20">{item.score} / {item.max_score}</td>
                 </tr>
               ))}
             </tbody>
           </table>
 
           {evaluation.approver_notes && (
-            <div className="mb-6">
-              <p className="font-bold mb-1">ความคิดเห็นจากผู้อนุมัติ:</p>
-              <p>{evaluation.approver_notes}</p>
+            <div className="mb-3">
+              <p className="font-bold mb-0.5">ความคิดเห็นจากผู้อนุมัติ:</p>
+              <p className="text-sm">{evaluation.approver_notes}</p>
             </div>
           )}
         </div>
 
         {photos.length > 0 && (
           <div className="print-content-fit">
-            <h3 className="text-2xl font-bold border-b-2 border-black pb-2 mb-4">ภาพถ่ายประกอบ</h3>
-            <div className="grid grid-cols-4 gap-4">
+            <h3 className="text-xl font-bold border-b border-black pb-1 mb-2">ภาพถ่ายประกอบ</h3>
+            <div className="grid grid-cols-4 gap-2">
               {photos.map(p => (
                 <div key={p.id}>
-                  <img src={p.public_url} alt="ภาพประกอบ" className="w-full h-32 object-cover rounded-md" />
+                  <img src={p.public_url} alt="ภาพประกอบ" className="w-full h-24 object-cover rounded-md" />
                   {p.caption && (
-                     <div className="text-center text-sm mt-1 text-gray-700">
+                     <div className="text-center text-xs mt-1 text-gray-700">
                        {p.caption === 'class_rep' ? 'ตัวแทนห้อง' : p.caption === 'student_council' ? 'องค์กรนักเรียน' : 'เพิ่มเติม'}
                      </div>
                   )}
