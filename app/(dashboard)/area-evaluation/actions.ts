@@ -219,7 +219,7 @@ export async function submitAreaEvaluation(formData: FormData) {
     if (areaData?.homeroom_id) {
       const { data: homeroom } = await adminClient
         .from("homerooms")
-        .select("class_name")
+        .select("class_name, grade_level")
         .eq("id", areaData.homeroom_id)
         .single();
         
@@ -230,7 +230,8 @@ export async function submitAreaEvaluation(formData: FormData) {
           `พื้นที่ของห้อง ${homeroom.class_name} ส่งรายงานแล้ว กรุณาไปตรวจสอบและให้คะแนน`,
           "area_evaluation",
           evalData.id,
-          "/area-evaluation"
+          "/area-evaluation",
+          { gradeLevel: homeroom.grade_level }
         );
       }
     }

@@ -176,7 +176,7 @@ export async function submitClassroomEvaluation(formData: FormData) {
   } else if (isReporter && evalData) {
     const { data: roomData } = await adminClient
       .from("rooms")
-      .select("name")
+      .select("name, building_id")
       .eq("id", room_id)
       .single();
       
@@ -187,7 +187,8 @@ export async function submitClassroomEvaluation(formData: FormData) {
         `ห้องเรียน ${roomData.name} ส่งรายงานแล้ว กรุณาไปตรวจสอบและให้คะแนน`,
         "classroom_evaluation",
         evalData.id,
-        "/classroom-eval"
+        "/classroom-eval",
+        { buildingId: roomData.building_id }
       );
     }
   }

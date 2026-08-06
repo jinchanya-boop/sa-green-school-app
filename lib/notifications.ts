@@ -138,16 +138,30 @@ export async function notifyStudentCouncil(
   body: string,
   entityType: string,
   entityId: string,
-  url: string
+  url: string,
+  options?: { gradeLevel?: number; buildingId?: string }
 ) {
   const { data: councilMembers } = await adminClient
     .from("profiles")
-    .select("id")
+    .select("id, grade_level, building_id")
     .eq("role", "student_council");
 
   if (!councilMembers || councilMembers.length === 0) return;
 
-  const notifications = councilMembers.map((member: any) => ({
+  const targetMembers = councilMembers.filter((m: any) => {
+    if (options?.gradeLevel && m.grade_level) return m.grade_level === options.gradeLevel;
+    if (options?.buildingId && m.building_id) return m.building_id === options.buildingId;
+    
+    // If we have options but user lacks that assignment, exclude them to be strict
+    if (options?.gradeLevel && !m.grade_level) return false;
+    if (options?.buildingId && !m.building_id) return false;
+    
+    return true; // No strict assignment matched or required
+  });
+
+  if (targetMembers.length === 0) return;
+
+  const notifications = targetMembers.map((member: any) => ({
     recipient_id: member.id,
     title,
     body,
