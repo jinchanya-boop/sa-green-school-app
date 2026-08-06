@@ -166,11 +166,24 @@ export async function removePendingNotifications(
   entityId: string,
   entityType: string
 ) {
-  // Delete all notifications for this entity that contain 'รอการอนุมัติ' in the body or title
-  await adminClient
+  // Get all notifications for this entity
+  const { data: notifs } = await adminClient
     .from("notifications")
-    .delete()
+    .select("id, title")
     .eq("entity_id", entityId)
-    .eq("entity_type", entityType)
-    .like("body", "%รอ%");
+    .eq("entity_type", entityType);
+
+  if (!notifs) return;
+
+  // Find notifications to delete (those that are not final results)
+  const toDelete = notifs
+    .filter((n: any) => !n.title.includes("✅") && !n.title.includes("❌"))
+    .map((n: any) => n.id);
+
+  if (toDelete.length > 0) {
+    await adminClient
+      .from("notifications")
+      .delete()
+      .in("id", toDelete);
+  }
 }
