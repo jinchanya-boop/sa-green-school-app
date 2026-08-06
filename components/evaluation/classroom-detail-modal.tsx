@@ -116,7 +116,7 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 print:absolute print:inset-0 print:bg-white print:block print:p-0 print:z-[99999] print:h-auto print:min-h-screen">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 print-root-container">
       
       <style>{`
         @media print {
@@ -125,6 +125,21 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
             overflow: visible !important;
             background-color: white !important;
             font-family: 'TH SarabunPSK', 'Sarabun', sans-serif !important;
+          }
+          .print-root-container {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 100vh !important;
+            background-color: #ffffff !important;
+            background: #ffffff !important;
+            z-index: 999999 !important;
+            display: block !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            backdrop-filter: none !important;
           }
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
           @page { size: A4; margin: 15mm; }
