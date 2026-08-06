@@ -28,13 +28,23 @@ export default async function ClassroomEvalPage() {
       supabase.from("evaluation_criteria").select("*").eq("module", "classroom").order("sort_order", { ascending: true })
     ]);
 
-  let mappedRooms = (rooms ?? []).map((r: any) => {
-    const homeroom = r.homerooms?.[0];
-    return {
-      ...r,
-      homeroom_id: homeroom?.id,
-      name: homeroom?.class_name ? `${r.name} (${homeroom.class_name})` : r.name
-    };
+  let mappedRooms: any[] = [];
+  (rooms ?? []).forEach((r: any) => {
+    if (r.homerooms && r.homerooms.length > 0) {
+      r.homerooms.forEach((homeroom: any) => {
+        mappedRooms.push({
+          ...r,
+          homeroom_id: homeroom.id,
+          name: `${r.name} (${homeroom.class_name})`
+        });
+      });
+    } else {
+      mappedRooms.push({
+        ...r,
+        homeroom_id: null,
+        name: r.name
+      });
+    }
   });
 
   if (role === "class_representative" && userHomeroomId) {
