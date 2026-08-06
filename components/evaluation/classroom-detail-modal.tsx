@@ -116,7 +116,7 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 print:static print:block print:p-0 print:bg-white print:h-auto print:w-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 print-only-modal">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -124,10 +124,27 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
       >
         <style>{`
           @media print {
-            body { 
-              font-family: 'TH SarabunPSK', 'Sarabun', sans-serif !important;
-              overflow: visible !important;
+            html, body {
               height: auto !important;
+              overflow: visible !important;
+              background-color: white !important;
+              font-family: 'TH SarabunPSK', 'Sarabun', sans-serif !important;
+            }
+            body * {
+              visibility: hidden;
+            }
+            .print-only-modal, .print-only-modal * {
+              visibility: visible;
+            }
+            .print-only-modal {
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: 100% !important;
+              height: auto !important;
+              padding: 0 !important;
+              background-color: white !important;
+              display: block !important;
             }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             @page { size: A4; margin: 10mm; }
