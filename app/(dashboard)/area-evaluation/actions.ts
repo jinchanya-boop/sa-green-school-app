@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
-import { notifyGradeHead, notifyUser, notifyStudentCouncil } from "@/lib/notifications";
+import { notifyGradeHead, notifyUser, notifyStudentCouncil, removePendingNotifications } from "@/lib/notifications";
 
 export async function submitAreaEvaluation(formData: FormData) {
   const supabase = await createClient();

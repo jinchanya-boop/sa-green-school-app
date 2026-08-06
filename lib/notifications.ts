@@ -160,3 +160,17 @@ export async function notifyStudentCouncil(
 
   await adminClient.from("notifications").insert(notifications);
 }
+
+export async function removePendingNotifications(
+  adminClient: SupabaseClient,
+  entityId: string,
+  entityType: string
+) {
+  // Delete all notifications for this entity that contain 'รอการอนุมัติ' in the body or title
+  await adminClient
+    .from("notifications")
+    .delete()
+    .eq("entity_id", entityId)
+    .eq("entity_type", entityType)
+    .like("body", "%รอ%");
+}

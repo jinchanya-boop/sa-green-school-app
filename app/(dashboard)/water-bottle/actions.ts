@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
-import { notifyGradeHead, notifyUser } from "@/lib/notifications";
+import { notifyGradeHead, notifyUser, removePendingNotifications } from "@/lib/notifications";
 
 export async function submitWaterBottleCheck(formData: FormData) {
   const supabase = await createClient();
@@ -177,6 +177,9 @@ export async function approveWaterBottleCheck(recordId: string, notes: string) {
       "/water-bottle"
     );
   }
+  
+  await removePendingNotifications(adminClient, recordId, "water_bottle");
+
   revalidatePath("/water-bottle");
   revalidatePath("/dashboard");
   return { success: true };
@@ -219,6 +222,9 @@ export async function rejectWaterBottleCheck(recordId: string, reason: string) {
       "/water-bottle"
     );
   }
+
+  await removePendingNotifications(adminClient, recordId, "water_bottle");
+
   revalidatePath("/water-bottle");
   return { success: true };
 }

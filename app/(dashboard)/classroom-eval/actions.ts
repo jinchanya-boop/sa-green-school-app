@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
-import { notifyBuildingHead, notifyUser, notifyStudentCouncil } from "@/lib/notifications";
+import { notifyBuildingHead, notifyUser, notifyStudentCouncil, removePendingNotifications } from "@/lib/notifications";
 
 export async function submitClassroomEvaluation(formData: FormData) {
   const supabase = await createClient();
@@ -450,6 +450,13 @@ export async function approveClassroomEvaluation(id: string, notes?: string) {
       "/classroom-eval"
     );
   }
+
+  const adminClient = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+  await removePendingNotifications(adminClient, id, "classroom_evaluation");
+
   revalidatePath("/classroom-eval");
   return { success: true };
 }
@@ -485,6 +492,13 @@ export async function rejectClassroomEvaluation(id: string, notes: string) {
       "/classroom-eval"
     );
   }
+
+  const adminClient = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+  await removePendingNotifications(adminClient, id, "classroom_evaluation");
+
   revalidatePath("/classroom-eval");
   return { success: true };
 }
