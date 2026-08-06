@@ -47,7 +47,9 @@ export default async function ClassroomEvalPage() {
     }
   });
 
-  if (role === "class_representative" && userHomeroomId) {
+  if (role === "student_council" && userBuildingId) {
+    mappedRooms = mappedRooms.filter(r => r.building_id === userBuildingId);
+  } else if (role === "class_representative" && userHomeroomId) {
     mappedRooms = mappedRooms.filter(r => r.homeroom_id === userHomeroomId);
   }
 
@@ -56,7 +58,7 @@ export default async function ClassroomEvalPage() {
   const isAdmin = role === 'administrator' || role === 'director' || role === 'deputy_director';
   const isStudentCouncil = role === 'student_council';
 
-  if (!isAdmin && !isStudentCouncil && role === 'building_supervisor' && userBuildingId) {
+  if (!isAdmin && ((role === 'building_supervisor' && userBuildingId) || (role === 'student_council' && userBuildingId))) {
     // Find all room IDs in this building
     const allowedRoomIds = mappedRooms
       .filter(r => r.building_id === userBuildingId)

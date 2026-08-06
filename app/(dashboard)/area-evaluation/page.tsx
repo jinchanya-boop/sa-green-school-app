@@ -17,7 +17,7 @@ export default async function AreaEvaluationPage() {
         .select("*")
         .order("created_at", { ascending: false })
         .limit(50),
-      supabase.from("responsible_areas").select("*").eq("is_active", true),
+      supabase.from("responsible_areas").select("*, homerooms(grade_level)").eq("is_active", true),
       supabase.from("semesters").select("*").eq("is_active", true),
       supabase.from("evaluation_criteria").select("*").eq("module", "area").order("sort_order", { ascending: true })
     ]);
@@ -30,6 +30,8 @@ export default async function AreaEvaluationPage() {
   let filteredAreas = areas ?? [];
   if (userRole === "class_representative" && userHomeroomId) {
     filteredAreas = filteredAreas.filter((a: any) => a.homeroom_id === userHomeroomId);
+  } else if (userRole === "student_council" && profile?.grade_level) {
+    filteredAreas = filteredAreas.filter((a: any) => a.homerooms?.grade_level === profile.grade_level);
   }
 
   // Filter evaluations for Grade Supervisors
@@ -37,7 +39,13 @@ export default async function AreaEvaluationPage() {
   const isAdmin = userRole === 'administrator' || userRole === 'director' || userRole === 'deputy_director';
   const isStudentCouncil = userRole === 'student_council';
   
-  if (!isAdmin && !isStudentCouncil && (userRole === 'grade_supervisor' || userRole === 'homeroom_teacher')) {
+  if (isStudentCouncil && profile?.grade_level) {
+    filteredEvaluations = filteredEvaluations.filter(ev => {
+      if (!ev.homeroom_name) return false;
+      const gradeStr = ev.homeroom_name.match(/ม\.(\d+)/)?.[1];
+      return gradeStr && parseInt(gradeStr) === profile.grade_level;
+    });
+  } else if (!isAdmin && !isStudentCouncil && (userRole === 'grade_supervisor' || userRole === 'homeroom_teacher')) {
     let gradeLevels: number[] = [];
     if (profile?.grade_level) gradeLevels.push(profile.grade_level);
 
