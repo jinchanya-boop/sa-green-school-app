@@ -117,55 +117,42 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 print-only-modal">
+      
+      <style>{`
+        @media print {
+          html, body {
+            height: auto !important;
+            overflow: visible !important;
+            background-color: white !important;
+            font-family: 'TH SarabunPSK', 'Sarabun', sans-serif !important;
+          }
+          .print-only-modal {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 100vh !important;
+            background-color: white !important;
+            z-index: 999999 !important;
+            display: block !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          @page { size: A4; margin: 15mm; }
+          .print-content-fit { page-break-inside: avoid; }
+        }
+      `}</style>
+
+      {/* Web View */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col print:max-h-none print:shadow-none print:w-full print:border-none print:p-0 print:m-0 print:bg-white print:text-black print:overflow-visible print:block print:h-auto"
+        className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col print:hidden"
       >
-        <style>{`
-          @media print {
-            html, body {
-              height: auto !important;
-              overflow: visible !important;
-              background-color: white !important;
-              font-family: 'TH SarabunPSK', 'Sarabun', sans-serif !important;
-            }
-            .print-only-modal {
-              position: absolute !important;
-              left: 0 !important;
-              top: 0 !important;
-              width: 100% !important;
-              height: auto !important;
-              min-height: 100vh !important;
-              background-color: white !important;
-              z-index: 999999 !important;
-              display: block !important;
-              padding: 0 !important;
-              margin: 0 !important;
-            }
-            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            @page { size: A4; margin: 10mm; }
-            .print-content-fit { page-break-inside: avoid; }
-          }
-        `}</style>
-
-        {/* Print Header */}
-        <div className="hidden print:flex flex-col items-center justify-center border-b border-gray-300 pb-4 mb-4 pt-2">
-          <img src="/logo.png" alt="School Logo" className="w-16 h-16 mb-2 object-contain" />
-          <h1 className="text-2xl font-bold text-black">รายงานผลการประเมินความสะอาดห้องเรียน</h1>
-          <h2 className="text-xl font-bold mt-1 text-black">โรงเรียนสา จังหวัดน่าน</h2>
-          <div className="text-lg mt-2 text-black flex gap-4">
-            <span><strong>ห้องเรียน:</strong> {evaluation.room_name}</span>
-            <span><strong>สัปดาห์ที่:</strong> {evaluation.eval_week}</span>
-          </div>
-          <div className="text-md text-black flex gap-4 mt-1">
-            <span><strong>รายงานโดย:</strong> {evaluation.reporter_name || "—"}</span>
-            {evaluation.evaluator_name && <span><strong>ประเมินโดย:</strong> {evaluation.evaluator_name}</span>}
-          </div>
-        </div>
-
         {/* Non-print Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800 no-print">
+        <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
           <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
               {needsScoring ? "ประเมินห้องเรียน: " : "รายละเอียดการประเมิน: "} {evaluation.room_name}
@@ -174,7 +161,7 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
               รายงานโดย {evaluation.reporter_name || "—"} {evaluation.evaluator_name && `• ประเมินโดย ${evaluation.evaluator_name}`} • สัปดาห์ที่ {evaluation.eval_week}
             </p>
           </div>
-          <div className="flex items-center gap-2 no-print">
+          <div className="flex items-center gap-2">
             {evaluation.status === 'approved' && (
               <button onClick={() => window.print()} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-colors">
                 <FileText className="w-4 h-4" /> PDF
@@ -192,7 +179,7 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-8 print:overflow-visible print:h-auto print:p-0 print:space-y-4 print:text-black">
+        <div className="flex-1 overflow-y-auto p-6 space-y-8">
           
           {/* Grading / Scoring */}
           {needsScoring ? (
@@ -318,13 +305,13 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
                 ไม่พบภาพถ่ายประกอบ
               </div>
             ) : (
-              <div className="space-y-6 print:space-y-2 print-content-fit">
-                <div className="grid grid-cols-2 print:grid-cols-4 gap-4 print:gap-2">
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
                   {photos.map(p => (
                     <div key={p.id} className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
                       <img src={p.public_url} alt={p.caption || "ภาพประกอบ"} className="object-cover w-full h-full" />
                       {p.caption && (
-                        <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[10px] p-1 truncate text-center no-print">
+                        <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[10px] p-1 truncate text-center">
                           {p.caption === 'class_rep' ? 'ตัวแทนห้อง' : p.caption === 'student_council' ? 'องค์กรนักเรียน' : 'เพิ่มเติม'}
                         </div>
                       )}
@@ -348,7 +335,7 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
           )}
         </div>
 
-        <div className="p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/30 flex justify-end gap-3 no-print">
+        <div className="p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/30 flex justify-end gap-3">
           <button
             onClick={onClose}
             className="px-5 py-2.5 rounded-xl font-medium text-gray-700 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
@@ -374,7 +361,7 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
         </div>
 
         {needsApproval && (
-          <div className="p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 no-print">
+          <div className="p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               ความคิดเห็นเพิ่มเติม / เหตุผลที่ไม่อนุมัติ (ถ้ามี)
             </label>
@@ -404,6 +391,77 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
           </div>
         )}
       </motion.div>
+
+      {/* Print View */}
+      <div className="hidden print:block bg-white text-black w-full min-h-screen px-8 py-4 font-sarabun text-lg">
+        <div className="text-center mb-6">
+          <img src="/logo.png" alt="School Logo" className="w-20 h-20 mx-auto mb-2 object-contain" />
+          <h1 className="text-3xl font-bold text-black leading-tight">รายงานผลการประเมินความสะอาดห้องเรียน</h1>
+          <h2 className="text-2xl font-bold text-black mb-4">โรงเรียนสา จังหวัดน่าน</h2>
+          
+          <div className="flex justify-center gap-12 text-xl font-medium">
+            <span>ห้องเรียน: {evaluation.room_name}</span>
+            <span>สัปดาห์ที่: {evaluation.eval_week}</span>
+          </div>
+          <div className="flex justify-center gap-12 text-xl mt-1">
+            <span>รายงานโดย: {evaluation.reporter_name || "—"}</span>
+            {evaluation.evaluator_name && <span>ประเมินโดย: {evaluation.evaluator_name}</span>}
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <div className="flex justify-between items-end border-b-2 border-black pb-2 mb-4">
+             <h3 className="text-2xl font-bold">รายละเอียดคะแนน</h3>
+             <div className="text-xl font-bold">
+               คะแนนรวม: {evaluation.total_score} / {evaluation.max_score || 30} 
+               <span className="font-normal ml-2">
+                 ({(Number(evaluation.total_score) / (Number(evaluation.max_score) || 30) * 100).toFixed(2)}% - {calculateGrade((Number(evaluation.total_score) / (Number(evaluation.max_score) || 30)) * 100).toUpperCase()})
+               </span>
+             </div>
+          </div>
+          
+          <table className="w-full text-xl mb-4 border-collapse">
+            <tbody>
+              {evalItems.map((item, idx) => (
+                <tr key={item.id} className="border-b border-gray-200">
+                  <td className="py-2 pr-4 w-10 text-center font-medium">{idx + 1}.</td>
+                  <td className="py-2">
+                    {item.evaluation_criteria?.name}
+                    {item.notes && <span className="block text-sm text-gray-500">หมายเหตุ: {item.notes}</span>}
+                  </td>
+                  <td className="py-2 text-right font-bold w-24">{item.score} / {item.max_score}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {evaluation.approver_notes && (
+            <div className="mb-6">
+              <p className="font-bold mb-1">ความคิดเห็นจากผู้อนุมัติ:</p>
+              <p>{evaluation.approver_notes}</p>
+            </div>
+          )}
+        </div>
+
+        {photos.length > 0 && (
+          <div className="print-content-fit">
+            <h3 className="text-2xl font-bold border-b-2 border-black pb-2 mb-4">ภาพถ่ายประกอบ</h3>
+            <div className="grid grid-cols-4 gap-4">
+              {photos.map(p => (
+                <div key={p.id}>
+                  <img src={p.public_url} alt="ภาพประกอบ" className="w-full h-32 object-cover rounded-md" />
+                  {p.caption && (
+                     <div className="text-center text-sm mt-1 text-gray-700">
+                       {p.caption === 'class_rep' ? 'ตัวแทนห้อง' : p.caption === 'student_council' ? 'องค์กรนักเรียน' : 'เพิ่มเติม'}
+                     </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }
