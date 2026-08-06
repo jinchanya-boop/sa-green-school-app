@@ -1,8 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Bell, CheckCheck, Trash2 } from "lucide-react";
+import { Bell, CheckCheck, Trash2, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
+import { markAllAsRead, deleteNotification } from "@/app/(dashboard)/notifications/actions";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Notif = Record<string, any>;
@@ -19,6 +21,21 @@ const TYPE_ICONS: Record<string, string> = {
 export function NotificationsView({ notifications }: { notifications: unknown[] }) {
   const notifs = notifications as Notif[];
   const unread = notifs.filter((n) => !n.is_read).length;
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [loadingAll, setLoadingAll] = useState(false);
+
+  const handleMarkAllRead = async () => {
+    setLoadingAll(true);
+    await markAllAsRead();
+    setLoadingAll(false);
+  };
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    setLoadingId(id);
+    await deleteNotification(id);
+    setLoadingId(null);
+  };
 
   return (
     <motion.div
@@ -47,8 +64,12 @@ export function NotificationsView({ notifications }: { notifications: unknown[] 
           </div>
         </div>
         {unread > 0 && (
-          <button className="flex items-center gap-2 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
-            <CheckCheck className="w-4 h-4" />
+          <button 
+            onClick={handleMarkAllRead}
+            disabled={loadingAll}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors disabled:opacity-50"
+          >
+            {loadingAll ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCheck className="w-4 h-4" />}
             ทำเครื่องหมายอ่านทั้งหมด
           </button>
         )}
@@ -87,13 +108,11 @@ export function NotificationsView({ notifications }: { notifications: unknown[] 
                   <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-2" />
                 )}
                 <button 
-                  className="p-1.5 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all rounded-lg hover:bg-red-50 dark:hover:bg-red-950"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    // Optional: handle delete logic here if implemented later
-                  }}
+                  className="p-1.5 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all rounded-lg hover:bg-red-50 dark:hover:bg-red-950 disabled:opacity-50"
+                  onClick={(e) => handleDelete(e, n.id)}
+                  disabled={loadingId === n.id}
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  {loadingId === n.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-red-500" /> : <Trash2 className="w-3.5 h-3.5" />}
                 </button>
               </div>
             );
