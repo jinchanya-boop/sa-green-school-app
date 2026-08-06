@@ -120,9 +120,34 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col print:max-h-none print:shadow-none print:w-full print:border-none"
+        className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col print:max-h-none print:shadow-none print:w-full print:border-none print:p-0 print:m-0 print:absolute print:inset-0 print:bg-white print:text-black print:overflow-visible"
       >
-        <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
+        <style>{`
+          @media print {
+            body { font-family: 'TH SarabunPSK', 'Sarabun', sans-serif !important; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            @page { size: A4; margin: 10mm; }
+            .print-content-fit { page-break-inside: avoid; }
+          }
+        `}</style>
+
+        {/* Print Header */}
+        <div className="hidden print:flex flex-col items-center justify-center border-b border-gray-300 pb-4 mb-4 pt-2">
+          <img src="/logo.png" alt="School Logo" className="w-16 h-16 mb-2 object-contain" />
+          <h1 className="text-2xl font-bold text-black">รายงานผลการประเมินความสะอาดห้องเรียน</h1>
+          <h2 className="text-xl font-bold mt-1 text-black">โรงเรียนสา จังหวัดน่าน</h2>
+          <div className="text-lg mt-2 text-black flex gap-4">
+            <span><strong>ห้องเรียน:</strong> {evaluation.room_name}</span>
+            <span><strong>สัปดาห์ที่:</strong> {evaluation.eval_week}</span>
+          </div>
+          <div className="text-md text-black flex gap-4 mt-1">
+            <span><strong>รายงานโดย:</strong> {evaluation.reporter_name || "—"}</span>
+            {evaluation.evaluator_name && <span><strong>ประเมินโดย:</strong> {evaluation.evaluator_name}</span>}
+          </div>
+        </div>
+
+        {/* Non-print Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800 no-print">
           <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
               {needsScoring ? "ประเมินห้องเรียน: " : "รายละเอียดการประเมิน: "} {evaluation.room_name}
@@ -149,7 +174,7 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-8 print:overflow-visible print:h-auto">
+        <div className="flex-1 overflow-y-auto p-6 space-y-8 print:overflow-visible print:h-auto print:p-0 print:space-y-4 print:text-black">
           
           {/* Grading / Scoring */}
           {needsScoring ? (
@@ -275,32 +300,19 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
                 ไม่พบภาพถ่ายประกอบ
               </div>
             ) : (
-              <div className="space-y-6">
-                {photos.some(p => p.caption === 'class_rep' || p.caption === null || p.caption === 'other') && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">ภาพจากตัวแทนห้อง (นักเรียน)</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      {photos.filter(p => p.caption === 'class_rep' || p.caption === null || p.caption === 'other').map(p => (
-                        <div key={p.id} className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
-                          <img src={p.public_url} alt="รูปภาพจากตัวแทนห้อง" className="object-cover w-full h-full" />
+              <div className="space-y-6 print:space-y-2 print-content-fit">
+                <div className="grid grid-cols-2 print:grid-cols-4 gap-4 print:gap-2">
+                  {photos.map(p => (
+                    <div key={p.id} className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
+                      <img src={p.public_url} alt={p.caption || "ภาพประกอบ"} className="object-cover w-full h-full" />
+                      {p.caption && (
+                        <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[10px] p-1 truncate text-center no-print">
+                          {p.caption === 'class_rep' ? 'ตัวแทนห้อง' : p.caption === 'student_council' ? 'องค์กรนักเรียน' : 'เพิ่มเติม'}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  </div>
-                )}
-                
-                {photos.some(p => p.caption && p.caption.includes('student_council')) && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">ภาพจากองค์กรนักเรียน</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      {photos.filter(p => p.caption && p.caption.includes('student_council')).map(p => (
-                        <div key={p.id} className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
-                          <img src={p.public_url} alt="รูปภาพจากองค์กรนักเรียน" className="object-cover w-full h-full" />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                  ))}
+                </div>
               </div>
             )}
           </div>
