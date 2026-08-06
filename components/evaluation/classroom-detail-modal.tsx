@@ -116,15 +116,19 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 print:static print:block print:p-0 print:bg-white print:h-auto print:w-auto">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col print:max-h-none print:shadow-none print:w-full print:border-none print:p-0 print:m-0 print:absolute print:inset-0 print:bg-white print:text-black print:overflow-visible"
+        className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col print:max-h-none print:shadow-none print:w-full print:border-none print:p-0 print:m-0 print:bg-white print:text-black print:overflow-visible print:block print:h-auto"
       >
         <style>{`
           @media print {
-            body { font-family: 'TH SarabunPSK', 'Sarabun', sans-serif !important; }
+            body { 
+              font-family: 'TH SarabunPSK', 'Sarabun', sans-serif !important;
+              overflow: visible !important;
+              height: auto !important;
+            }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             @page { size: A4; margin: 10mm; }
             .print-content-fit { page-break-inside: avoid; }
