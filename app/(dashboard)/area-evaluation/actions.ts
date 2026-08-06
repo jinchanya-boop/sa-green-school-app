@@ -424,6 +424,9 @@ export async function evaluateAreaReport(evaluationId: string, formData: FormDat
   
   await Promise.all(uploadPromises);
 
+  // Remove pending notifications for Student Council before sending new ones
+  await removePendingNotifications(adminClient, evaluationId, "area_evaluation");
+
   // Notify Grade Head
   const { data: evalData } = await adminClient
     .from("area_evaluations")
