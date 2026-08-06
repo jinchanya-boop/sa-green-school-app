@@ -129,6 +129,7 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
               height: auto !important;
               overflow: visible !important;
               background-color: white !important;
+              color-scheme: light !important;
               font-family: 'TH SarabunPSK', 'Sarabun', sans-serif !important;
             }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
