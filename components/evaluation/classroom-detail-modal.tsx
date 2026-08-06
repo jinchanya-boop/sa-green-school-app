@@ -130,21 +130,18 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
               background-color: white !important;
               font-family: 'TH SarabunPSK', 'Sarabun', sans-serif !important;
             }
-            body * {
-              visibility: hidden;
-            }
-            .print-only-modal, .print-only-modal * {
-              visibility: visible;
-            }
             .print-only-modal {
               position: absolute !important;
               left: 0 !important;
               top: 0 !important;
               width: 100% !important;
               height: auto !important;
-              padding: 0 !important;
+              min-height: 100vh !important;
               background-color: white !important;
+              z-index: 999999 !important;
               display: block !important;
+              padding: 0 !important;
+              margin: 0 !important;
             }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             @page { size: A4; margin: 10mm; }
