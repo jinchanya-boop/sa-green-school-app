@@ -41,6 +41,13 @@ export async function submitClassroomEvaluation(formData: FormData) {
     return { success: false, error: "Missing required fields" };
   }
   
+  if (isReporter) {
+    const bkkTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Bangkok" }));
+    if (bkkTime.getHours() >= 15) {
+      return { success: false, error: "หมดเวลาส่งรายงาน (15:00 น.)" };
+    }
+  }
+  
   if (!isReporter && criteriaIds.length === 0) {
     return { success: false, error: "Missing criteria scoring" };
   }

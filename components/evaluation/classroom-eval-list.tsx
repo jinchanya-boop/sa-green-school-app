@@ -151,15 +151,54 @@ export function ClassroomEvalList({ evaluations, rooms, semesters, criteria, use
                     className="w-full pl-10 pr-4 py-2.5 rounded-full border border-gray-200 dark:border-gray-700/50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-purple-500/20 outline-none transition-all shadow-sm"
                   />
                 </div>
-                {userRole !== "student_council" && (
-                  <button 
-                    onClick={() => setIsFormOpen(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-full text-sm font-bold transition-all shadow-lg shadow-purple-500/20 hover:scale-105 active:scale-95"
-                  >
-                    <Plus className="w-4 h-4" />
-                    ประเมินใหม่
-                  </button>
-                )}
+                {(() => {
+                  const now = new Date();
+                  const isPastDeadline = now.getHours() >= 15;
+                  
+                  if (userRole === "class_representative") {
+                    return (
+                      <button 
+                        onClick={() => {
+                          if (isPastDeadline) {
+                            alert("หมดเวลาส่งรายงาน (15:00 น.)");
+                          } else {
+                            setIsFormOpen(true);
+                          }
+                        }}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all shadow-lg ${
+                          isPastDeadline 
+                            ? "bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed" 
+                            : "bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white shadow-purple-500/20 hover:scale-105 active:scale-95"
+                        }`}
+                      >
+                        <Plus className="w-4 h-4" />
+                        {isPastDeadline ? "หมดเวลาส่ง (15:00)" : "ประเมินใหม่"}
+                      </button>
+                    );
+                  }
+
+                  if (userRole === "student_council") {
+                    return (
+                      <button 
+                        onClick={() => setIsFormOpen(true)}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-full text-sm font-bold transition-all shadow-lg shadow-purple-500/20 hover:scale-105 active:scale-95"
+                      >
+                        <Plus className="w-4 h-4" />
+                        ประเมินแทนตัวแทนห้อง
+                      </button>
+                    );
+                  }
+
+                  return (
+                    <button 
+                      onClick={() => setIsFormOpen(true)}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-full text-sm font-bold transition-all shadow-lg shadow-purple-500/20 hover:scale-105 active:scale-95"
+                    >
+                      <Plus className="w-4 h-4" />
+                      ประเมินใหม่
+                    </button>
+                  );
+                })()}
               </div>
             </motion.div>
 
