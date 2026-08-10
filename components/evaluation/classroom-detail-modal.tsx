@@ -22,6 +22,7 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
   
   const [rejectNotes, setRejectNotes] = useState("");
   const [approving, setApproving] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const needsScoring = userRole === "student_council" && evaluation.status === "draft";
   const needsApproval = ["building_supervisor", "grade_supervisor", "administrator"].includes(userRole || "") && evaluation.status === "submitted";
@@ -301,8 +302,12 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   {photos.map(p => (
-                    <div key={p.id} className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
-                      <img src={p.public_url} alt={p.caption || "ภาพประกอบ"} className="object-cover w-full h-full" />
+                    <div 
+                      key={p.id} 
+                      className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 cursor-pointer group"
+                      onClick={() => setSelectedImage(p.public_url)}
+                    >
+                      <img src={p.public_url} alt={p.caption || "ภาพประกอบ"} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" />
                       {p.caption && (
                         <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[10px] p-1 truncate text-center">
                           {p.caption === 'class_rep' ? 'ตัวแทนห้อง' : p.caption === 'student_council' ? 'องค์กรนักเรียน' : 'เพิ่มเติม'}
@@ -456,6 +461,24 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
       </div>
 
     </div>
+
+      {/* Image Viewer Modal */}
+      {selectedImage && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm print:hidden" onClick={() => setSelectedImage(null)}>
+          <button 
+            onClick={(e) => { e.stopPropagation(); setSelectedImage(null); }}
+            className="absolute top-4 right-4 p-2 text-white/70 hover:text-white bg-black/50 hover:bg-black/80 rounded-full transition-all"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <img 
+            src={selectedImage} 
+            alt="Full size" 
+            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </>
   );
 }
