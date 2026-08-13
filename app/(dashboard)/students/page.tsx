@@ -48,7 +48,6 @@ export default async function StudentsPage() {
     const { data } = await supabase
       .from("students")
       .select("*, profiles(id, role, email)")
-      .eq("is_active", true)
       .order("id")
       .range(from, from + step - 1);
       

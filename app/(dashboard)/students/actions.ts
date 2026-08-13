@@ -61,7 +61,7 @@ export async function updateStudent(id: string, data: any) {
   return { success: true };
 }
 
-export async function deleteStudent(id: string) {
+export async function deleteStudent(id: string, hardDelete: boolean = false) {
   const supabase = await createClient();
   const adminClient = createAdminClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -71,13 +71,87 @@ export async function deleteStudent(id: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "Unauthorized" };
 
-  // Instead of hard delete, maybe just deactivate
+  // Fetch student info
+  const { data: student } = await adminClient
+    .from("students")
+    .select("profile_id")
+    .eq("id", id)
+    .single();
+
+  if (hardDelete) {
+    // 1. Delete dependent water bottle status records if present
+    await adminClient
+      .from("student_water_bottle_statuses")
+      .delete()
+      .eq("student_id", id);
+
+    // 2. Unlink & cleanup profile/auth user if exists
+    if (student?.profile_id) {
+      await adminClient.from("students").update({ profile_id: null }).eq("id", id);
+      await adminClient.from("profiles").delete().eq("id", student.profile_id);
+      try {
+        await adminClient.auth.admin.deleteUser(student.profile_id);
+      } catch (err) {
+        console.error("Failed to delete auth user:", err);
+      }
+    }
+
+    // 3. Delete student record
+    const { error } = await adminClient.from("students").delete().eq("id", id);
+    if (error) return { success: false, error: error.message };
+  } else {
+    // Soft delete: mark as inactive and set left date
+    const { error } = await adminClient
+      .from("students")
+      .update({
+        is_active: false,
+        left_at: new Date().toISOString().split("T")[0],
+        left_reason: "จำหน่าย/ลาออก"
+      })
+      .eq("id", id);
+
+    if (error) return { success: false, error: error.message };
+
+    if (student?.profile_id) {
+      await adminClient.from("profiles").update({ is_active: false }).eq("id", student.profile_id);
+    }
+  }
+
+  revalidatePath("/students");
+  return { success: true };
+}
+
+export async function restoreStudent(id: string) {
+  const supabase = await createClient();
+  const adminClient = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const { data: student } = await adminClient
+    .from("students")
+    .select("profile_id")
+    .eq("id", id)
+    .single();
+
   const { error } = await adminClient
     .from("students")
-    .update({ is_active: false })
+    .update({
+      is_active: true,
+      left_at: null,
+      left_reason: null
+    })
     .eq("id", id);
 
   if (error) return { success: false, error: error.message };
+
+  if (student?.profile_id) {
+    await adminClient.from("profiles").update({ is_active: true }).eq("id", student.profile_id);
+  }
+
   revalidatePath("/students");
   return { success: true };
 }
