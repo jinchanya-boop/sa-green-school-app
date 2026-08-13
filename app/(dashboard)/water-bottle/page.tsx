@@ -85,7 +85,7 @@ export default async function WaterBottlePage() {
       .from("students")
       .select("id, homeroom_id, student_number, first_name, last_name")
       .eq("is_active", true)
-      .order("student_number", { ascending: true })
+      .order("id")
       .range(from, from + step - 1);
       
     if (!data || data.length === 0) break;
