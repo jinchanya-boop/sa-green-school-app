@@ -49,6 +49,7 @@ export default async function StudentsPage() {
       .from("students")
       .select("*, profiles(id, role, email)")
       .eq("is_active", true)
+      .order("id")
       .range(from, from + step - 1);
       
     if (!data || data.length === 0) break;
