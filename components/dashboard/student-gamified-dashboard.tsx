@@ -11,6 +11,8 @@ import { useState, useEffect, useMemo } from "react";
 import { formatPercent } from "@/lib/utils";
 import Link from "next/link";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { ClassroomStatsComparison } from "./classroom-stats-comparison";
+import { parseISO, isSameWeek } from "date-fns";
 
 interface StudentGamifiedDashboardProps {
   totalEvals: number;
@@ -38,6 +40,9 @@ export function StudentGamifiedDashboard({
   profile
 }: StudentGamifiedDashboardProps) {
   
+  const [comparisonCategory, setComparisonCategory] = useState<"area" | "classroom" | "water">("area");
+  const [comparisonGrade, setComparisonGrade] = useState<string>("1");
+
   // Calculate gamified stats based on existing data
   const myHomeroomId = profile?.homeroom_id || (homerooms.length > 0 ? homerooms[0].id : null);
   const myHomeroom = homerooms.find(h => h.id === myHomeroomId);
@@ -82,11 +87,63 @@ export function StudentGamifiedDashboard({
     return Object.values(statsMap).map(s => {
       s.total = s.area + s.class + s.water;
       return s;
-    }).sort((a, b) => b.total - a.total).slice(0, 5); // Top 5 by total
+    }).sort((a, b) => b.total - a.total);
   }, [homerooms, areaStats, classroomStats, waterStats]);
 
   const myStats = submissionStats.find(s => s.name === classNameStr);
   const mySubmissionCount = myStats ? myStats.total : 0;
+
+  // Calculate Weekly Goal
+  const weeklyGoalStats = useMemo(() => {
+    if (!myHomeroomId) return { count: 0, percent: 0, daysLeft: 0 };
+    
+    const now = new Date();
+    const isThisWeek = (dateStr: string) => {
+      if (!dateStr) return false;
+      const d = parseISO(dateStr);
+      if (isNaN(d.getTime())) return false;
+      return isSameWeek(d, now, { weekStartsOn: 1 });
+    };
+
+    let count = 0;
+    areaStats.forEach(a => { if (a.homeroom_id === myHomeroomId && isThisWeek(a.evaluated_at)) count++; });
+    classroomStats.forEach(c => { if (c.homeroom_id === myHomeroomId && isThisWeek(c.evaluated_at)) count++; });
+    waterStats.forEach(w => { if (w.homeroom_id === myHomeroomId && isThisWeek(w.check_date)) count++; });
+
+    const maxWeekly = 15; // 5 days * 3 activities
+    const percent = Math.min(100, Math.round((count / maxWeekly) * 100));
+    
+    let currentDay = now.getDay();
+    if (currentDay === 0) currentDay = 7; // Sunday is 7
+    const daysLeft = Math.max(0, 5 - currentDay); // Mon-Fri
+
+    return { count, percent, daysLeft };
+  }, [areaStats, classroomStats, waterStats, myHomeroomId]);
+
+  // Filter for bottom chart
+  const filteredSubmissionStats = useMemo(() => {
+    let targetHomerooms = homerooms;
+    
+    if (comparisonGrade === "junior") {
+      targetHomerooms = homerooms.filter(h => h.grade_level >= 1 && h.grade_level <= 3);
+    } else if (comparisonGrade === "senior") {
+      targetHomerooms = homerooms.filter(h => h.grade_level >= 4 && h.grade_level <= 6);
+    } else {
+      targetHomerooms = homerooms.filter(h => h.grade_level === parseInt(comparisonGrade));
+    }
+
+    return targetHomerooms.map(h => {
+      const stats = submissionStats.find(s => s.name === h.class_name);
+      const statValue = stats 
+        ? (comparisonCategory === "classroom" ? stats.class : stats[comparisonCategory])
+        : 0;
+        
+      return {
+        name: h.class_name,
+        value: statValue
+      };
+    });
+  }, [homerooms, submissionStats, comparisonCategory, comparisonGrade]);
 
   return (
     <div className="space-y-6 pb-20">
@@ -312,7 +369,7 @@ export function StudentGamifiedDashboard({
                 เป้าหมายประจำสัปดาห์
               </h2>
               <span className="text-[10px] sm:text-xs font-bold bg-purple-200 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 px-3 py-1 rounded-full border border-purple-300 dark:border-purple-700">
-                เหลืออีก 3 วัน
+                {weeklyGoalStats.daysLeft > 0 ? `เหลืออีก ${weeklyGoalStats.daysLeft} วัน` : "หมดเวลาแล้ว"}
               </span>
             </div>
             
@@ -320,14 +377,14 @@ export function StudentGamifiedDashboard({
               <div className="flex justify-between text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">
                 <span className="flex items-center gap-2">
                   <Leaf className="w-4 h-4 text-emerald-500" />
-                  รักษ์โลกต่อเนื่อง
+                  รักษ์โลกต่อเนื่อง ({weeklyGoalStats.count}/15)
                 </span>
-                <span className="text-purple-600 dark:text-purple-400 font-black">80%</span>
+                <span className="text-purple-600 dark:text-purple-400 font-black">{weeklyGoalStats.percent}%</span>
               </div>
               <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden shadow-inner">
                 <motion.div 
                   initial={{ width: 0 }}
-                  animate={{ width: "80%" }}
+                  animate={{ width: `${weeklyGoalStats.percent}%` }}
                   transition={{ duration: 1.5, delay: 0.5, ease: "easeOut" }}
                   className="h-full bg-gradient-to-r from-purple-400 to-indigo-500 rounded-full relative"
                 >
@@ -438,65 +495,121 @@ export function StudentGamifiedDashboard({
         </div>
 
         <div className="lg:col-span-2">
-          {/* NEW SECTION: SUBMISSION STATISTICS */}
+          {/* NEW SECTION: SUBMISSION STATISTICS WITH COMPARISON */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
-            className="bg-white dark:bg-gray-900 rounded-[32px] p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-gray-800 h-full flex flex-col"
+            className="h-full"
           >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-              <div>
-                <h2 className="text-lg font-black text-gray-900 dark:text-white flex items-center gap-2">
-                  <BarChart2 className="w-6 h-6 text-blue-500 fill-blue-500/20" />
-                  สถิติความขยัน (Activity Submissions)
-                </h2>
-                <p className="text-sm font-medium text-gray-500 mt-1">
-                  เทียบจำนวนครั้งที่ส่งกิจกรรมของห้องเรา กับห้องที่ส่งบ่อยที่สุด
-                </p>
-              </div>
-              <div className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-black px-4 py-2 rounded-xl text-sm whitespace-nowrap self-start sm:self-auto border border-blue-100 dark:border-blue-800/50">
-                ห้องเราส่งแล้ว {mySubmissionCount} ครั้ง
-              </div>
-            </div>
-            
-            <div className="flex-1 min-h-[300px] w-full mt-4">
-              {submissionStats.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={submissionStats} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
-                    <XAxis 
-                      dataKey="name" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fill: '#9CA3AF', fontSize: 12, fontWeight: 'bold' }} 
-                      dy={10}
-                    />
-                    <YAxis 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fill: '#9CA3AF', fontSize: 12 }} 
-                    />
-                    <Tooltip 
-                      cursor={{ fill: 'rgba(0,0,0,0.02)' }}
-                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                      labelStyle={{ fontWeight: 'bold', color: '#1F2937', marginBottom: '8px' }}
-                    />
-                    <Legend 
-                      iconType="circle" 
-                      wrapperStyle={{ fontSize: '12px', fontWeight: 'bold', paddingTop: '20px' }} 
-                    />
-                    <Bar name="เขตพื้นที่" dataKey="area" fill="#10B981" radius={[4, 4, 0, 0]} />
-                    <Bar name="ห้องเรียน" dataKey="class" fill="#A855F7" radius={[4, 4, 0, 0]} />
-                    <Bar name="แก้วน้ำส่วนตัว" dataKey="water" fill="#06B6D4" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-gray-400 font-medium">ไม่มีข้อมูลการส่งกิจกรรม</div>
-              )}
-            </div>
+            <ClassroomStatsComparison
+              myHomeroomId={myHomeroomId}
+              homerooms={homerooms}
+              areaStats={areaStats}
+              classroomStats={classroomStats}
+              waterStats={waterStats}
+            />
           </motion.div>
         </div>
       </div>
+
+      {/* NEW SECTION: COMPARISON CHART WITH FILTERS */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7 }}
+        className="bg-white dark:bg-gray-900 rounded-[32px] p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-gray-800"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+          <div>
+            <h2 className="text-lg font-black text-gray-900 dark:text-white flex items-center gap-2">
+              <BarChart2 className="w-6 h-6 text-indigo-500 fill-indigo-500/20" />
+              สถิติการส่งงานของแต่ละห้อง
+            </h2>
+            <p className="text-sm font-medium text-gray-500 mt-1">
+              เปรียบเทียบจำนวนการส่งงานแยกตามประเภทและระดับชั้น
+            </p>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+              <button
+                onClick={() => setComparisonCategory("area")}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 ${
+                  comparisonCategory === "area" ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5" /> พื้นที่
+              </button>
+              <button
+                onClick={() => setComparisonCategory("classroom")}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 ${
+                  comparisonCategory === "classroom" ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                }`}
+              >
+                <School className="w-3.5 h-3.5" /> ห้องเรียน
+              </button>
+              <button
+                onClick={() => setComparisonCategory("water")}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 ${
+                  comparisonCategory === "water" ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                }`}
+              >
+                <Droplets className="w-3.5 h-3.5" /> แก้วน้ำ
+              </button>
+            </div>
+            <select 
+              value={comparisonGrade} 
+              onChange={e => setComparisonGrade(e.target.value)}
+              className="bg-gray-50 dark:bg-gray-800 border-none text-sm font-medium rounded-lg focus:ring-0 cursor-pointer text-gray-900 dark:text-white py-1.5"
+            >
+              <option value="1">ม.1</option>
+              <option value="2">ม.2</option>
+              <option value="3">ม.3</option>
+              <option value="4">ม.4</option>
+              <option value="5">ม.5</option>
+              <option value="6">ม.6</option>
+              <option value="junior">ม.ต้น</option>
+              <option value="senior">ม.ปลาย</option>
+            </select>
+          </div>
+        </div>
+        
+        <div className="h-[280px] w-full mt-4">
+          {filteredSubmissionStats.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={filteredSubmissionStats} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#9CA3AF', fontSize: 12, fontWeight: 'bold' }} 
+                  dy={10}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#9CA3AF', fontSize: 12 }} 
+                />
+                <Tooltip 
+                  cursor={{ fill: 'rgba(0,0,0,0.02)' }}
+                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  labelStyle={{ fontWeight: 'bold', color: '#1F2937', marginBottom: '8px' }}
+                />
+                <Bar 
+                  name={comparisonCategory === "area" ? "พื้นที่" : comparisonCategory === "classroom" ? "ห้องเรียน" : "แก้วน้ำ"} 
+                  dataKey="value" 
+                  fill={comparisonCategory === "area" ? "#10B981" : comparisonCategory === "classroom" ? "#8B5CF6" : "#06B6D4"} 
+                  radius={[6, 6, 0, 0]} 
+                  maxBarSize={50}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-gray-400 font-medium">ไม่มีข้อมูลห้องเรียนในระดับชั้นนี้</div>
+          )}
+        </div>
+      </motion.div>
     </div>
   );
 }

@@ -26,19 +26,19 @@ export default async function DashboardPage() {
     supabase
       .from("area_evaluations")
       .select("*", { count: "exact", head: true })
-      .eq("status", "approved"),
+      .in("status", ["submitted", "approved"]),
     supabase
       .from("area_evaluations")
       .select("id, homeroom_id:responsible_areas(homeroom_id), evaluated_at, percentage, grade")
-      .eq("status", "approved"),
+      .in("status", ["submitted", "approved"]),
     supabase
       .from("classroom_evaluations")
       .select("id, homeroom_id, evaluated_at, percentage, grade")
-      .eq("status", "approved"),
+      .in("status", ["submitted", "approved"]),
     supabase
       .from("water_bottle_records")
       .select("id, homeroom_id, check_date, percentage, grade")
-      .eq("status", "submitted"),
+      .in("status", ["submitted", "approved"]),
     supabase
       .from("homeroom_semester_scores")
       .select(`

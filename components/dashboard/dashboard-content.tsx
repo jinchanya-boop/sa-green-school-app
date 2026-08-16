@@ -37,6 +37,7 @@ import { formatDistanceToNow, getWeek } from "date-fns";
 import { th } from "date-fns/locale";
 import { StatCard } from "./stat-card";
 import { StudentGamifiedDashboard } from "./student-gamified-dashboard";
+import { ClassroomStatsComparison } from "./classroom-stats-comparison";
 
 interface DashboardContentProps {
   totalEvals: number;
@@ -104,6 +105,7 @@ function StandardDashboardContent({
   todaySubmissions = { area: [], classroom: [], water: [] },
   evaluationRounds = [],
   academicYear = 2567,
+  profile,
 }: DashboardContentProps) {
   const areaGrades = countGrades(areaStats);
   const classroomGrades = countGrades(classroomStats);
@@ -428,6 +430,19 @@ function StandardDashboardContent({
           />
         ))}
       </motion.div>
+
+      {/* Classroom Stats for Teachers */}
+      {profile?.homeroom_id && (
+        <motion.div variants={itemVariants}>
+          <ClassroomStatsComparison
+            myHomeroomId={profile.homeroom_id}
+            homerooms={homerooms}
+            areaStats={areaStats}
+            classroomStats={classroomStats}
+            waterStats={waterStats}
+          />
+        </motion.div>
+      )}
 
       {/* Monthly Progress Trends */}
       <motion.div variants={itemVariants} className="stat-card bg-white dark:bg-gray-900">
