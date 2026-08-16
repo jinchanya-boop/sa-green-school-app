@@ -13,6 +13,20 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user?.id).single();
 
+  // If profile doesn't have homeroom_id (e.g. they are a teacher), check homeroom_teachers table
+  if (profile && !profile.homeroom_id && user) {
+    const { data: hrTeacher } = await supabase
+      .from('homeroom_teachers')
+      .select('homeroom_id')
+      .eq('teacher_id', user.id)
+      .limit(1)
+      .maybeSingle();
+    
+    if (hrTeacher) {
+      profile.homeroom_id = hrTeacher.homeroom_id;
+    }
+  }
+
   // Fetch dashboard statistics in parallel
   const [
     { count: totalEvals },
