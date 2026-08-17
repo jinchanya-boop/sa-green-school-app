@@ -98,7 +98,14 @@ export async function submitWaterBottleCheck(formData: FormData) {
 
   if (recordError || !recordData) {
     console.error("Water Bottle Record Insert Error:", recordError);
-    return { success: false, error: recordError?.message || "Failed to submit record" };
+    let errorMsg = recordError?.message || "Failed to submit record";
+    
+    // ดักจับ Error เกี่ยวกับ API Key เพื่อแจ้งเตือนให้เข้าใจง่ายขึ้น
+    if (errorMsg.includes("Unregistered API key") || errorMsg.includes("Invalid API key")) {
+      errorMsg = "ระบบตั้งค่า API Key ไม่ถูกต้อง กรุณาอัปเดต SUPABASE_SERVICE_ROLE_KEY บน Vercel";
+    }
+    
+    return { success: false, error: errorMsg };
   }
 
   // 2. Insert items (student statuses)
