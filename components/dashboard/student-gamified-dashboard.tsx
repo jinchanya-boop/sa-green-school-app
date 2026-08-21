@@ -577,34 +577,37 @@ export function StudentGamifiedDashboard({
         
         <div className="h-[280px] w-full mt-4">
           {filteredSubmissionStats.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={filteredSubmissionStats} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#9CA3AF', fontSize: 12, fontWeight: 'bold' }} 
-                  dy={10}
-                />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#9CA3AF', fontSize: 12 }} 
-                />
-                <Tooltip 
-                  cursor={{ fill: 'rgba(0,0,0,0.02)' }}
-                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                  labelStyle={{ fontWeight: 'bold', color: '#1F2937', marginBottom: '8px' }}
-                />
-                <Bar 
-                  name={comparisonCategory === "area" ? "พื้นที่" : comparisonCategory === "classroom" ? "ห้องเรียน" : "แก้วน้ำ"} 
-                  dataKey="value" 
-                  fill={comparisonCategory === "area" ? "#10B981" : comparisonCategory === "classroom" ? "#8B5CF6" : "#06B6D4"} 
-                  radius={[6, 6, 0, 0]} 
-                  maxBarSize={50}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="text-gray-500 dark:text-gray-400">
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={filteredSubmissionStats} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: 'currentColor', fontSize: 12, fontWeight: 'bold' }} 
+                    dy={10}
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: 'currentColor', fontSize: 12 }} 
+                    dx={-10}
+                  />
+                  <Tooltip 
+                    cursor={{ fill: 'rgba(0,0,0,0.02)' }}
+                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                    labelStyle={{ fontWeight: 'bold', color: '#1F2937', marginBottom: '8px' }}
+                  />
+                  <Bar 
+                    name={comparisonCategory === "area" ? "พื้นที่" : comparisonCategory === "classroom" ? "ห้องเรียน" : "แก้วน้ำ"} 
+                    dataKey="value" 
+                    fill={comparisonCategory === "area" ? "#10B981" : comparisonCategory === "classroom" ? "#8B5CF6" : "#06B6D4"} 
+                    radius={[6, 6, 0, 0]} 
+                    maxBarSize={50}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           ) : (
             <div className="h-full flex items-center justify-center text-gray-400 font-medium">ไม่มีข้อมูลห้องเรียนในระดับชั้นนี้</div>
           )}

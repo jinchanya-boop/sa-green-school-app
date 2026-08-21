@@ -219,40 +219,43 @@ export function ClassroomStatsComparison({
         <div className="space-y-8">
           {/* Chart */}
           <div className="h-[350px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#888888" strokeOpacity={0.1} vertical={false} />
-                <XAxis 
-                  dataKey="period" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#9CA3AF', fontSize: 12, fontWeight: '600' }} 
-                  dy={10}
-                />
-                <YAxis 
-                  domain={[0, 100]}
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#9CA3AF', fontSize: 12 }} 
-                />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.02)' }} />
-                <Legend wrapperStyle={{ fontSize: '13px', fontWeight: 'bold', paddingTop: '20px' }} />
-                
-                {/* My Homeroom Bars */}
-                <Bar name="พื้นที่ (ห้องเรา)" dataKey="myAreaAvg" fill="#10B981" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                <Bar name="ห้องเรียน (ห้องเรา)" dataKey="myClassAvg" fill="#8B5CF6" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                <Bar name="แก้วน้ำ (ห้องเรา)" dataKey="myWaterAvg" fill="#06B6D4" radius={[4, 4, 0, 0]} maxBarSize={40} />
+            <div className="text-gray-500 dark:text-gray-400">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#888888" strokeOpacity={0.1} vertical={false} />
+                  <XAxis 
+                    dataKey="period" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: 'currentColor', fontSize: 12, fontWeight: '600' }} 
+                    dy={10}
+                  />
+                  <YAxis 
+                    domain={[0, 100]}
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: 'currentColor', fontSize: 12 }} 
+                    dx={-10}
+                  />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.02)' }} />
+                  <Legend wrapperStyle={{ fontSize: '13px', fontWeight: 'bold', paddingTop: '20px' }} />
+                  
+                  {/* My Homeroom Bars */}
+                  <Bar name="พื้นที่ (ห้องเรา)" dataKey="myAreaAvg" fill="#10B981" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  <Bar name="ห้องเรียน (ห้องเรา)" dataKey="myClassAvg" fill="#8B5CF6" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  <Bar name="แก้วน้ำ (ห้องเรา)" dataKey="myWaterAvg" fill="#06B6D4" radius={[4, 4, 0, 0]} maxBarSize={40} />
 
-                {/* Compared Homeroom Bars (Rendered only if selected) */}
-                {compareHomeroomId !== "none" && (
-                  <>
-                    <Bar name={`พื้นที่ (${compareHomeroom?.class_name})`} dataKey="compAreaAvg" fill="#F59E0B" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                    <Bar name={`ห้องเรียน (${compareHomeroom?.class_name})`} dataKey="compClassAvg" fill="#EC4899" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                    <Bar name={`แก้วน้ำ (${compareHomeroom?.class_name})`} dataKey="compWaterAvg" fill="#3B82F6" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                  </>
-                )}
-              </BarChart>
-            </ResponsiveContainer>
+                  {/* Compared Homeroom Bars (Rendered only if selected) */}
+                  {compareHomeroomId !== "none" && (
+                    <>
+                      <Bar name={`พื้นที่ (${compareHomeroom?.class_name})`} dataKey="compAreaAvg" fill="#F59E0B" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                      <Bar name={`ห้องเรียน (${compareHomeroom?.class_name})`} dataKey="compClassAvg" fill="#EC4899" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                      <Bar name={`แก้วน้ำ (${compareHomeroom?.class_name})`} dataKey="compWaterAvg" fill="#3B82F6" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                    </>
+                  )}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
           {/* Detailed Table */}

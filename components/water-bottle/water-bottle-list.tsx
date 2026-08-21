@@ -278,11 +278,12 @@ export function WaterBottleList({ records: initialRecords, homerooms, semesters,
                   <TrendingUp className="w-5 h-5 text-cyan-500" />
                   แนวโน้มอัตราการใช้แก้วน้ำ (7 วันล่าสุด)
                 </h2>
-                <ResponsiveContainer width="100%" height={220}>
+                <div className="text-gray-500 dark:text-gray-400">
+                  <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" vertical={false} />
-                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                    <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'currentColor' }} axisLine={false} tickLine={false} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: 'currentColor' }} axisLine={false} tickLine={false} />
                     <Tooltip
                       cursor={{ fill: 'rgba(8, 145, 178, 0.05)' }}
                       contentStyle={{ borderRadius: "16px", border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
@@ -297,6 +298,7 @@ export function WaterBottleList({ records: initialRecords, homerooms, semesters,
                     </defs>
                   </BarChart>
                 </ResponsiveContainer>
+                </div>
               </motion.div>
             )}
 

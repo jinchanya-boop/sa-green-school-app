@@ -216,11 +216,12 @@ export function ReportsView({ homerooms, classroomEvals, areaEvals, waterEvals, 
           </button>
         </div>
         <div className="relative z-10">
+          <div className="text-gray-500 dark:text-gray-400">
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={reportData} barSize={20} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" vertical={false} />
-              <XAxis dataKey="week" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} dy={10} />
-              <YAxis domain={[60, 100]} tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="week" tick={{ fontSize: 12, fill: 'currentColor' }} axisLine={false} tickLine={false} dy={10} />
+              <YAxis domain={[60, 100]} tick={{ fontSize: 12, fill: 'currentColor' }} axisLine={false} tickLine={false} dx={-10} />
               <Tooltip
                 cursor={{ fill: 'rgba(99, 102, 241, 0.04)' }}
                 contentStyle={{ borderRadius: "16px", border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)', padding: '12px 16px' }}
@@ -238,6 +239,7 @@ export function ReportsView({ homerooms, classroomEvals, areaEvals, waterEvals, 
               <Bar dataKey="water" name="แก้วน้ำส่วนตัว" fill="#06b6d4" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
+          </div>
         </div>
       </motion.div>
 
