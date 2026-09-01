@@ -281,8 +281,10 @@ export async function approveAreaEvaluation(evaluationId: string, percentage: nu
       "/area-evaluation"
     );
   }
+  
   revalidatePath("/area-evaluation");
   revalidatePath("/area-evaluation/approvals");
+  revalidatePath("/pending-approvals");
   revalidatePath("/dashboard");
   return { success: true };
 }
@@ -324,6 +326,8 @@ export async function rejectAreaEvaluation(evaluationId: string, reason: string)
   }
   revalidatePath("/area-evaluation");
   revalidatePath("/area-evaluation/approvals");
+  revalidatePath("/pending-approvals");
+  revalidatePath("/dashboard");
   return { success: true };
 }
 

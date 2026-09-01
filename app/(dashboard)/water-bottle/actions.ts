@@ -188,6 +188,7 @@ export async function approveWaterBottleCheck(recordId: string, notes: string) {
   await removePendingNotifications(adminClient, recordId, "water_bottle");
 
   revalidatePath("/water-bottle");
+  revalidatePath("/pending-approvals");
   revalidatePath("/dashboard");
   return { success: true };
 }
@@ -233,5 +234,7 @@ export async function rejectWaterBottleCheck(recordId: string, reason: string) {
   await removePendingNotifications(adminClient, recordId, "water_bottle");
 
   revalidatePath("/water-bottle");
+  revalidatePath("/pending-approvals");
+  revalidatePath("/dashboard");
   return { success: true };
 }

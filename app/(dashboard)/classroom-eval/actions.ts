@@ -300,6 +300,8 @@ export async function submitClassroomReport(formData: FormData) {
   
   await Promise.all(uploadPromises);
   revalidatePath("/classroom-eval");
+  revalidatePath("/pending-approvals");
+  revalidatePath("/dashboard");
   return { success: true };
 }
 
@@ -440,6 +442,8 @@ export async function evaluateClassroomReport(evaluationId: string, formData: Fo
   }
 
   revalidatePath("/classroom-eval");
+  revalidatePath("/pending-approvals");
+  revalidatePath("/dashboard");
   return { success: true };
 }
 
@@ -482,6 +486,8 @@ export async function approveClassroomEvaluation(id: string, notes?: string) {
   await removePendingNotifications(adminClient, id, "classroom_evaluation");
 
   revalidatePath("/classroom-eval");
+  revalidatePath("/pending-approvals");
+  revalidatePath("/dashboard");
   return { success: true };
 }
 
@@ -524,5 +530,7 @@ export async function rejectClassroomEvaluation(id: string, notes: string) {
   await removePendingNotifications(adminClient, id, "classroom_evaluation");
 
   revalidatePath("/classroom-eval");
+  revalidatePath("/pending-approvals");
+  revalidatePath("/dashboard");
   return { success: true };
 }

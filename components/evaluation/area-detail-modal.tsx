@@ -11,14 +11,15 @@ import { evaluateAreaReport, approveAreaEvaluation, rejectAreaEvaluation } from 
 
 interface AreaDetailModalProps {
   evaluation: any;
+  items?: any[];
   userRole?: string;
   criteria?: any[];
   onClose: () => void;
 }
 
-export function AreaDetailModal({ evaluation, userRole, criteria = [], onClose }: AreaDetailModalProps) {
+export function AreaDetailModal({ evaluation, items: initialItems, userRole, criteria = [], onClose }: AreaDetailModalProps) {
   const [photos, setPhotos] = useState<any[]>([]);
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<any[]>(initialItems || []);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,9 +34,10 @@ export function AreaDetailModal({ evaluation, userRole, criteria = [], onClose }
   useEffect(() => {
     const fetchData = async () => {
       const supabase = createClient();
+      
       const [photosRes, itemsRes] = await Promise.all([
         supabase.from("evaluation_photos").select("*").eq("evaluation_id", evaluation.id),
-        supabase.from("area_evaluation_items").select("*").eq("area_evaluation_id", evaluation.id)
+        !initialItems ? supabase.from("area_evaluation_items").select("*").eq("area_evaluation_id", evaluation.id) : { data: initialItems }
       ]);
       
       setPhotos(photosRes.data || []);
@@ -43,7 +45,7 @@ export function AreaDetailModal({ evaluation, userRole, criteria = [], onClose }
       setLoading(false);
     };
     fetchData();
-  }, [evaluation.id]);
+  }, [evaluation.id, initialItems]);
 
   async function handleSubmitScores(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

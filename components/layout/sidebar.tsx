@@ -19,6 +19,7 @@ import {
   X,
   Trophy,
   Users,
+  ClipboardList,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -56,6 +57,12 @@ const navItems: NavItem[] = [
     label: "ติดตามแก้วน้ำส่วนตัว",
     icon: Droplets,
     roles: ["administrator", "director", "deputy_director", "grade_supervisor", "homeroom_teacher", "student", "class_representative", "student_council"],
+  },
+  {
+    href: "/pending-approvals",
+    label: "รออนุมัติ",
+    icon: ClipboardList,
+    roles: ["administrator", "director", "deputy_director", "building_supervisor", "grade_supervisor"],
   },
   {
     href: "/reports",
@@ -112,9 +119,10 @@ interface SidebarProps {
   onMobileClose: () => void;
   profile: Profile | null;
   unreadCount?: number;
+  pendingCount?: number;
 }
 
-export function Sidebar({ collapsed, mobileOpen, onMobileClose, profile, unreadCount = 0 }: SidebarProps) {
+export function Sidebar({ collapsed, mobileOpen, onMobileClose, profile, unreadCount = 0, pendingCount = 0 }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -210,6 +218,11 @@ export function Sidebar({ collapsed, mobileOpen, onMobileClose, profile, unreadC
               {!collapsed && item.badge && (
                 <span className="text-[10px] font-bold bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 px-1.5 py-0.5 rounded-md ml-auto">
                   {item.badge}
+                </span>
+              )}
+              {!collapsed && item.href === "/pending-approvals" && pendingCount > 0 && (
+                <span className="ml-auto min-w-[20px] h-5 px-1.5 text-xs font-bold bg-red-500 text-white flex items-center justify-center rounded-md shadow-sm">
+                  {pendingCount > 99 ? '99+' : pendingCount}
                 </span>
               )}
               {!collapsed && item.href === "/notifications" && unreadCount > 0 && (

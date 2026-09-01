@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Trophy, TrendingUp, TrendingDown, Minus, Droplets, Calendar, Star, MapPin, School, Medal } from "lucide-react";
+import { Trophy, TrendingUp, TrendingDown, Minus, Droplets, Calendar, Star, MapPin, School, Medal, CalendarRange } from "lucide-react";
 import { formatPercent, GRADE_BG } from "@/lib/utils";
 import { Confetti } from "@/components/ui/confetti";
 
@@ -11,10 +11,11 @@ interface RankingsViewProps {
   waterRecords: any[];
   areaRecords: any[];
   classRecords: any[];
-  overallScores: any[];
+  semester?: any;
 }
 
 type TabType = "area" | "classroom" | "water";
+type FilterMode = "month" | "range" | "all";
 
 function getGrade(percentage: number) {
   if (percentage >= 90) return "gold";
@@ -23,12 +24,15 @@ function getGrade(percentage: number) {
   return "fail";
 }
 
-export function RankingsView({ homerooms, waterRecords, areaRecords, classRecords, overallScores }: RankingsViewProps) {
+export function RankingsView({ homerooms, waterRecords, areaRecords, classRecords, semester }: RankingsViewProps) {
   const [activeTab, setActiveTab] = useState<TabType>("area");
   const [rankingGroup, setRankingGroup] = useState<"junior" | "senior">("junior");
+  const [filterMode, setFilterMode] = useState<FilterMode>("all");
   
   const currentMonth = new Date().toISOString().slice(0, 7);
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
 
   // Collect all available months across all record types
   const availableMonths = useMemo(() => {
@@ -39,24 +43,37 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
       });
     };
     addMonths(waterRecords, "check_date");
-    addMonths(areaRecords, "eval_date");
-    addMonths(classRecords, "eval_date");
+    addMonths(areaRecords, "evaluated_at");
+    addMonths(classRecords, "evaluated_at");
     
     const sorted = Array.from(months).sort().reverse();
     if (!sorted.includes(currentMonth)) sorted.unshift(currentMonth);
     return sorted;
   }, [waterRecords, areaRecords, classRecords, currentMonth]);
 
+  // Filter records by date based on filterMode
+  const filterByDate = (records: any[], dateField: string) => {
+    if (filterMode === "all") return records;
+    if (filterMode === "month") {
+      return records.filter(r => r[dateField]?.startsWith(selectedMonth));
+    }
+    // Range mode
+    return records.filter(r => {
+      const d = r[dateField]?.slice(0, 10);
+      if (!d) return false;
+      if (dateFrom && d < dateFrom) return false;
+      if (dateTo && d > dateTo) return false;
+      return true;
+    });
+  };
 
-
-  // Generic function to process rankings for a specific type (area, class, water)
-  const processRankings = (records: any[], dateField: string, isArea: boolean = false) => {
-    const monthRecords = records.filter(r => r[dateField]?.startsWith(selectedMonth));
+  // Generic function to process rankings for a specific type
+  const processRankings = (records: any[], dateField: string) => {
+    const filteredRecords = filterByDate(records, dateField);
     const hrMap = new Map<string, any[]>();
     
-    monthRecords.forEach(r => {
-      // Area records have homeroom_id inside area relation
-      const hrId = isArea ? r.area?.homeroom_id : r.homeroom_id;
+    filteredRecords.forEach(r => {
+      const hrId = r.homeroom_id;
       if (hrId) {
         if (!hrMap.has(hrId)) hrMap.set(hrId, []);
         hrMap.get(hrId)!.push(r);
@@ -76,43 +93,30 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
       const avgPercentage = totalChecks > 0 
         ? recs.reduce((sum, r) => sum + (r.percentage || 0), 0) / totalChecks 
         : 0;
-      
-      const w1: number[] = [], w2: number[] = [], w3: number[] = [], w4: number[] = [];
-      recs.forEach(r => {
-        const day = parseInt(r[dateField].split("-")[2]);
-        if (day <= 7) w1.push(r.percentage);
-        else if (day <= 14) w2.push(r.percentage);
-        else if (day <= 21) w3.push(r.percentage);
-        else w4.push(r.percentage);
-      });
-
-      const avgW = (arr: number[]) => arr.length > 0 ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
 
       return {
         id: hr.id,
         class: hr.class_name,
-        building: hr.buildings?.name || "ไม่ระบุ",
+        building: hr.rooms?.buildings?.name || "ไม่ระบุ",
         totalChecks,
         avgPercentage,
         grade: getGrade(avgPercentage),
-        weekly: [avgW(w1), avgW(w2), avgW(w3), avgW(w4)]
       };
     });
 
-    rankingsData.sort((a, b) => b.avgPercentage - a.avgPercentage);
+    // Only include homerooms that have data
+    const withData = rankingsData.filter(r => r.totalChecks > 0);
+    withData.sort((a, b) => b.avgPercentage - a.avgPercentage);
     
-    return rankingsData.map((data, index) => ({
+    return withData.map((data, index) => ({
       ...data,
       rank: index + 1,
-      trend: data.weekly[3] !== null && data.weekly[2] !== null 
-        ? (data.weekly[3]! > data.weekly[2]! ? "up" : data.weekly[3]! < data.weekly[2]! ? "down" : "stable") 
-        : "stable"
     }));
   };
 
-  const waterRankings = useMemo(() => processRankings(waterRecords, "check_date"), [homerooms, waterRecords, selectedMonth, rankingGroup]);
-  const areaRankings = useMemo(() => processRankings(areaRecords, "eval_date", true), [homerooms, areaRecords, selectedMonth, rankingGroup]);
-  const classroomRankings = useMemo(() => processRankings(classRecords, "eval_date"), [homerooms, classRecords, selectedMonth, rankingGroup]);
+  const waterRankings = useMemo(() => processRankings(waterRecords, "check_date"), [homerooms, waterRecords, selectedMonth, rankingGroup, filterMode, dateFrom, dateTo]);
+  const areaRankings = useMemo(() => processRankings(areaRecords, "evaluated_at"), [homerooms, areaRecords, selectedMonth, rankingGroup, filterMode, dateFrom, dateTo]);
+  const classroomRankings = useMemo(() => processRankings(classRecords, "evaluated_at"), [homerooms, classRecords, selectedMonth, rankingGroup, filterMode, dateFrom, dateTo]);
 
   const getDisplayData = () => {
     switch (activeTab) {
@@ -124,6 +128,16 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
   };
 
   const displayData = getDisplayData();
+
+  const getFilterLabel = () => {
+    if (filterMode === "all") return "ตลอดภาคเรียน";
+    if (filterMode === "month") {
+      const d = new Date(selectedMonth + "-01");
+      return d.toLocaleDateString("th-TH", { month: 'long', year: 'numeric' });
+    }
+    if (dateFrom && dateTo) return `${dateFrom} ถึง ${dateTo}`;
+    return "เลือกช่วงวันที่";
+  };
 
   const getTabColors = (tab: TabType) => {
     switch (tab) {
@@ -170,7 +184,7 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
           <div>
             <h1 className="text-2xl font-black text-gray-900 dark:text-white">หอเกียรติยศ (Leaderboard)</h1>
             <p className="text-gray-500 font-medium text-sm">
-              {`${theme.title} — ศึกประชันความเป็นเลิศแห่งเดือน`}
+              {`${theme.title} — ศึกประชันความเป็นเลิศ • ${getFilterLabel()}`}
             </p>
           </div>
         </div>
@@ -196,22 +210,59 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center gap-4">
-        <div className="flex items-center gap-3 bg-white dark:bg-gray-900 p-3 rounded-2xl border-2 border-gray-100 dark:border-gray-800 shadow-sm w-full sm:max-w-sm focus-within:border-blue-500 transition-colors">
-          <Calendar className="w-5 h-5 text-blue-500" />
-          <span className="text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap">ประจำเดือน:</span>
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row items-stretch gap-4">
+        {/* Filter Mode */}
+        <div className="flex items-center gap-3 bg-white dark:bg-gray-900 p-3 rounded-2xl border-2 border-gray-100 dark:border-gray-800 shadow-sm w-full sm:max-w-xs focus-within:border-indigo-500 transition-colors">
+          <CalendarRange className="w-5 h-5 text-indigo-500" />
+          <span className="text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap">ช่วงเวลา:</span>
           <select 
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
+            value={filterMode}
+            onChange={(e) => setFilterMode(e.target.value as FilterMode)}
             className="w-full bg-transparent border-none text-sm font-bold focus:ring-0 cursor-pointer text-gray-900 dark:text-white"
           >
-            {availableMonths.map(m => {
-              const d = new Date(m + "-01");
-              const label = d.toLocaleDateString("th-TH", { month: 'long', year: 'numeric' });
-              return <option key={m} value={m} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">{label}</option>
-            })}
+            <option value="all" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">ตลอดภาคเรียน</option>
+            <option value="month" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">รายเดือน</option>
+            <option value="range" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">กำหนดเอง</option>
           </select>
         </div>
+
+        {filterMode === "month" && (
+          <div className="flex items-center gap-3 bg-white dark:bg-gray-900 p-3 rounded-2xl border-2 border-gray-100 dark:border-gray-800 shadow-sm w-full sm:max-w-sm focus-within:border-blue-500 transition-colors">
+            <Calendar className="w-5 h-5 text-blue-500" />
+            <span className="text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap">เดือน:</span>
+            <select 
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="w-full bg-transparent border-none text-sm font-bold focus:ring-0 cursor-pointer text-gray-900 dark:text-white"
+            >
+              {availableMonths.map(m => {
+                const d = new Date(m + "-01");
+                const label = d.toLocaleDateString("th-TH", { month: 'long', year: 'numeric' });
+                return <option key={m} value={m} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">{label}</option>
+              })}
+            </select>
+          </div>
+        )}
+
+        {filterMode === "range" && (
+          <div className="flex items-center gap-3 bg-white dark:bg-gray-900 p-3 rounded-2xl border-2 border-gray-100 dark:border-gray-800 shadow-sm w-full sm:max-w-md focus-within:border-blue-500 transition-colors">
+            <Calendar className="w-5 h-5 text-blue-500 shrink-0" />
+            <input 
+              type="date" 
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="bg-transparent border-none text-sm font-bold focus:ring-0 text-gray-900 dark:text-white w-36"
+            />
+            <span className="text-gray-400 text-sm font-bold">ถึง</span>
+            <input 
+              type="date" 
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="bg-transparent border-none text-sm font-bold focus:ring-0 text-gray-900 dark:text-white w-36"
+            />
+          </div>
+        )}
 
         <div className="flex items-center gap-3 bg-white dark:bg-gray-900 p-3 rounded-2xl border-2 border-gray-100 dark:border-gray-800 shadow-sm w-full sm:max-w-xs focus-within:border-purple-500 transition-colors">
           <School className="w-5 h-5 text-purple-500" />
@@ -292,7 +343,7 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full mb-4">
             <Trophy className="w-10 h-10 text-gray-300 dark:text-gray-600" />
           </div>
-          <p className="text-gray-500 font-bold">ยังไม่มีข้อมูลสำหรับการจัดอันดับในเดือนนี้</p>
+          <p className="text-gray-500 font-bold">ยังไม่มีข้อมูลสำหรับการจัดอันดับในช่วงเวลานี้</p>
         </div>
       )}
 
@@ -326,11 +377,7 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
                     <p className="text-xs text-gray-500 hidden sm:inline-flex items-center gap-1">
                       <MapPin className="w-3 h-3" /> {r.building}
                     </p>
-                    <div className="flex gap-1">
-                      {[0, 1, 2, 3].map(w => (
-                        <div key={w} className={`w-2 h-2 rounded-full ${r.weekly[w] !== null ? 'bg-green-400' : 'bg-gray-200 dark:bg-gray-700'}`} title={`สัปดาห์ ${w+1}`} />
-                      ))}
-                    </div>
+                    <span className="text-xs text-gray-400">({r.totalChecks} ครั้ง)</span>
                   </div>
                 </div>
 
@@ -338,11 +385,6 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
                   <p className="font-black text-xl text-gray-900 dark:text-white group-hover:text-blue-500 transition-colors">
                     {formatPercent(r.avgPercentage)}
                   </p>
-                  <div className="flex justify-end items-center mt-1">
-                    {r.trend === "up" ? <TrendingUp className="w-4 h-4 text-green-500" /> :
-                     r.trend === "down" ? <TrendingDown className="w-4 h-4 text-red-500" /> :
-                     <Minus className="w-4 h-4 text-gray-400" />}
-                  </div>
                 </div>
               </motion.div>
             );

@@ -9,9 +9,10 @@ interface DashboardShellProps {
   children: React.ReactNode;
   profile: Profile | null;
   unreadCount?: number;
+  pendingCount?: number;
 }
 
-export function DashboardShell({ children, profile, unreadCount = 0 }: DashboardShellProps) {
+export function DashboardShell({ children, profile, unreadCount = 0, pendingCount = 0 }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -38,6 +39,7 @@ export function DashboardShell({ children, profile, unreadCount = 0 }: Dashboard
         onMobileClose={() => setMobileOpen(false)}
         profile={profile}
         unreadCount={unreadCount}
+        pendingCount={pendingCount}
       />
 
       {/* Mobile overlay */}

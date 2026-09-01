@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BarChart3, Download, FileSpreadsheet, FileText, Calendar, Filter, Target, Trophy, Droplets, Leaf, Star } from "lucide-react";
+import { BarChart3, Download, FileSpreadsheet, FileText, Calendar, Filter, Target, Trophy, Droplets, Leaf, Star, X } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { calculateGrade, GRADE_BG } from "@/lib/utils";
 
@@ -12,6 +12,60 @@ interface ReportsViewProps {
   areaEvals: any[];
   waterEvals: any[];
   semester: any;
+}
+
+function Top10Modal({ isOpen, onClose, topClassrooms }: { isOpen: boolean, onClose: () => void, topClassrooms: any[] }) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-gray-100 dark:border-gray-800"
+      >
+        <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl flex items-center justify-center">
+              <Trophy className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">10 อันดับห้องเรียนยอดเยี่ยม</h2>
+              <p className="text-xs text-gray-500">เรียงตามคะแนนรวมสูงสุด</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6 space-y-3">
+          {topClassrooms.map((room, idx) => (
+            <div key={idx} className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/20 hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shrink-0 ${
+                idx === 0 ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800' :
+                idx === 1 ? 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700' :
+                idx === 2 ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-400 border border-orange-200 dark:border-orange-800' :
+                'bg-gray-50 text-gray-400 dark:bg-gray-900/50'
+              }`}>
+                {idx + 1}
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 dark:text-white text-lg">{room.class}</h3>
+              </div>
+              <div className="text-right">
+                <div className="font-bold text-indigo-600 dark:text-indigo-400 text-xl">{room.totalScore.toFixed(1)}</div>
+                <div className="text-xs text-gray-500 font-medium">คะแนนรวม</div>
+              </div>
+            </div>
+          ))}
+          {topClassrooms.length === 0 && (
+            <div className="text-center text-gray-500 py-10">ไม่พบข้อมูลการประเมิน</div>
+          )}
+        </div>
+      </motion.div>
+    </div>
+  );
 }
 
 const containerVariants = {
@@ -25,6 +79,7 @@ const itemVariants = {
 };
 
 export function ReportsView({ homerooms, classroomEvals, areaEvals, waterEvals, semester }: ReportsViewProps) {
+  const [isTop10ModalOpen, setIsTop10ModalOpen] = useState(false);
   
   // Helper to calculate week relative to semester
   const getWeek = (dateStr: string) => {
@@ -159,11 +214,13 @@ export function ReportsView({ homerooms, classroomEvals, areaEvals, waterEvals, 
           { label: "พื้นที่รับผิดชอบเฉลี่ย", value: overallAvgArea.toFixed(1) + "%", icon: Leaf, color: "from-green-500 to-emerald-500", shadow: "shadow-green-500/20" },
         ].map((s) => {
           const Icon = s.icon;
+          const isClickable = s.label === "ห้องเรียนยอดเยี่ยม";
           return (
             <motion.div 
               whileHover={{ y: -4 }}
               key={s.label} 
-              className="bg-white dark:bg-gray-900 rounded-3xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm relative overflow-hidden group cursor-default"
+              onClick={() => isClickable && setIsTop10ModalOpen(true)}
+              className={`bg-white dark:bg-gray-900 rounded-3xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm relative overflow-hidden group ${isClickable ? 'cursor-pointer hover:border-orange-200 dark:hover:border-orange-800/50 hover:shadow-orange-500/10' : 'cursor-default'}`}
             >
               <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${s.color} opacity-5 rounded-full blur-xl group-hover:opacity-10 transition-opacity`} />
               <div className="flex items-center gap-4 relative z-10">
@@ -175,6 +232,11 @@ export function ReportsView({ homerooms, classroomEvals, areaEvals, waterEvals, 
                   <p className="text-xs font-bold text-gray-400 truncate">{s.label}</p>
                 </div>
               </div>
+              {isClickable && (
+                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity text-orange-500">
+                  <span className="text-xs font-bold">ดู 10 อันดับ</span>
+                </div>
+              )}
             </motion.div>
           );
         })}
@@ -317,6 +379,14 @@ export function ReportsView({ homerooms, classroomEvals, areaEvals, waterEvals, 
           </div>
         </div>
       </motion.div>
+
+      <AnimatePresence>
+        <Top10Modal 
+          isOpen={isTop10ModalOpen} 
+          onClose={() => setIsTop10ModalOpen(false)} 
+          topClassrooms={tableData.slice(0, 10)} 
+        />
+      </AnimatePresence>
     </motion.div>
   );
 }

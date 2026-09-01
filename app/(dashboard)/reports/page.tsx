@@ -20,7 +20,7 @@ export default async function ReportsPage() {
     supabase.from('homerooms').select('*').eq('is_active', true),
     supabase.from('v_classroom_evaluations_full').select('*').eq('status', 'approved').eq('semester_id', activeSemester?.id),
     supabase.from('v_area_evaluations_full').select('*').eq('status', 'approved').eq('semester_id', activeSemester?.id),
-    supabase.from('water_bottle_records').select('*').eq('semester_id', activeSemester?.id).eq('status', 'submitted')
+    supabase.from('water_bottle_records').select('*').eq('semester_id', activeSemester?.id).eq('status', 'approved')
   ]);
 
   return <ReportsView 
