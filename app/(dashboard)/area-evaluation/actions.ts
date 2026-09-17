@@ -460,3 +460,45 @@ export async function evaluateAreaReport(evaluationId: string, formData: FormDat
   revalidatePath("/area-evaluation");
   return { success: true };
 }
+
+export async function deleteAreaEvaluation(id: string) {
+  const supabase = await createClient();
+  const adminClient = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Authentication required" };
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (profile?.role !== "administrator") {
+    return { success: false, error: "ไม่มีสิทธิ์ในการลบข้อมูล" };
+  }
+
+  // Delete photos from storage
+  const { data: photos } = await adminClient
+    .from("evaluation_photos")
+    .select("storage_path")
+    .eq("evaluation_id", id);
+    
+  if (photos && photos.length > 0) {
+    const paths = photos.map((p: any) => p.storage_path);
+    await adminClient.storage.from("evaluation-photos").remove(paths);
+  }
+
+  const { error } = await adminClient
+    .from("area_evaluations")
+    .delete()
+    .eq("id", id);
+
+  if (error) return { success: false, error: error.message };
+
+  await removePendingNotifications(adminClient, id, "area_evaluation");
+
+  revalidatePath("/area-evaluation");
+  revalidatePath("/area-evaluation/approvals");
+  revalidatePath("/pending-approvals");
+  revalidatePath("/dashboard");
+  return { success: true };
+}

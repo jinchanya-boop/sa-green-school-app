@@ -238,3 +238,34 @@ export async function rejectWaterBottleCheck(recordId: string, reason: string) {
   revalidatePath("/dashboard");
   return { success: true };
 }
+
+export async function deleteWaterBottleCheck(recordId: string) {
+  const supabase = await createClient();
+  const adminClient = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Authentication required" };
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (profile?.role !== "administrator") {
+    return { success: false, error: "ไม่มีสิทธิ์ในการลบข้อมูล" };
+  }
+
+  // Delete the record
+  const { error } = await adminClient
+    .from("water_bottle_records")
+    .delete()
+    .eq("id", recordId);
+
+  if (error) return { success: false, error: error.message };
+
+  await removePendingNotifications(adminClient, recordId, "water_bottle");
+
+  revalidatePath("/water-bottle");
+  revalidatePath("/pending-approvals");
+  revalidatePath("/dashboard");
+  return { success: true };
+}

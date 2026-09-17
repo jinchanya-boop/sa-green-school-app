@@ -5,7 +5,7 @@ import { X, Check, XCircle, Droplets, Save, FileText } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { formatThaiDateShort, GRADE_BG, calculateGrade, STATUS_COLORS, STATUS_LABELS } from "@/lib/utils";
-import { approveWaterBottleCheck, rejectWaterBottleCheck } from "@/app/(dashboard)/water-bottle/actions";
+import { approveWaterBottleCheck, rejectWaterBottleCheck, deleteWaterBottleCheck } from "@/app/(dashboard)/water-bottle/actions";
 
 interface WaterBottleDetailModalProps {
   record: any;
@@ -17,6 +17,7 @@ export function WaterBottleDetailModal({ record, userRole, onClose }: WaterBottl
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [approving, setApproving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [rejectNotes, setRejectNotes] = useState("");
 
   const needsApproval = ["grade_supervisor", "deputy_director", "administrator"].includes(userRole || "") && record.status === "submitted";
@@ -70,6 +71,19 @@ export function WaterBottleDetailModal({ record, userRole, onClose }: WaterBottl
     }
   };
 
+  const handleDelete = async () => {
+    if (window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลนี้? การกระทำนี้ไม่สามารถกู้คืนได้ และครูจะสามารถบันทึกข้อมูลใหม่ของวันนี้ได้อีกครั้ง")) {
+      setDeleting(true);
+      const result = await deleteWaterBottleCheck(record.id);
+      if (result.success) {
+        window.location.reload();
+      } else {
+        alert("Error: " + result.error);
+        setDeleting(false);
+      }
+    }
+  };
+
   return (
     <>
       {/* Backdrop (hidden in print) */}
@@ -110,6 +124,15 @@ export function WaterBottleDetailModal({ record, userRole, onClose }: WaterBottl
             </p>
           </div>
           <div className="flex items-center gap-2 no-print">
+            {userRole === 'administrator' && (
+              <button 
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                {deleting ? "กำลังลบ..." : "ลบข้อมูล"}
+              </button>
+            )}
             {record.status === 'approved' && (
               <button onClick={() => window.print()} className="px-3 py-1.5 bg-cyan-50 text-cyan-600 hover:bg-cyan-100 dark:bg-cyan-900/30 dark:text-cyan-400 dark:hover:bg-cyan-900/50 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-colors">
                 <FileText className="w-4 h-4" /> PDF

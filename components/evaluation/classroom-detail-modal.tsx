@@ -4,7 +4,7 @@ import { X, CheckCircle, Clock, AlertTriangle, MessageSquare, Image as ImageIcon
 import { createClient } from "@/lib/supabase/client";
 import imageCompression from "browser-image-compression";
 import { calculateGrade, formatThaiDate } from "@/lib/utils";
-import { evaluateClassroomReport, approveClassroomEvaluation, rejectClassroomEvaluation } from "@/app/(dashboard)/classroom-eval/actions";
+import { evaluateClassroomReport, approveClassroomEvaluation, rejectClassroomEvaluation, deleteClassroomEvaluation } from "@/app/(dashboard)/classroom-eval/actions";
 
 interface ClassroomDetailModalProps {
   evaluation: any;
@@ -22,6 +22,7 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
   
   const [rejectNotes, setRejectNotes] = useState("");
   const [approving, setApproving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const needsScoring = userRole === "student_council" && evaluation.status === "draft";
@@ -116,6 +117,19 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
     else alert(result.error);
   };
 
+  const handleDelete = async () => {
+    if (window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลนี้? การกระทำนี้ไม่สามารถกู้คืนได้")) {
+      setDeleting(true);
+      const result = await deleteClassroomEvaluation(evaluation.id);
+      if (result.success) {
+        window.location.reload();
+      } else {
+        alert("Error: " + result.error);
+        setDeleting(false);
+      }
+    }
+  };
+
   return (
     <>
       {/* Backdrop (hidden in print) */}
@@ -156,6 +170,15 @@ export function ClassroomDetailModal({ evaluation, userRole, criteria = [], onCl
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {userRole === 'administrator' && (
+              <button 
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                {deleting ? "กำลังลบ..." : "ลบข้อมูล"}
+              </button>
+            )}
             {evaluation.status === 'approved' && (
               <button onClick={() => window.print()} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-colors">
                 <FileText className="w-4 h-4" /> PDF
