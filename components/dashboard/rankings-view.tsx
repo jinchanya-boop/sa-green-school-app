@@ -106,7 +106,11 @@ export function RankingsView({ homerooms, waterRecords, areaRecords, classRecord
 
     // Only include homerooms that have data
     const withData = rankingsData.filter(r => r.totalChecks > 0);
-    withData.sort((a, b) => b.avgPercentage - a.avgPercentage);
+    withData.sort((a, b) => {
+      const diff = b.avgPercentage - a.avgPercentage;
+      if (diff !== 0) return diff;
+      return b.totalChecks - a.totalChecks; // tie-break: ตรวจบ่อยกว่า = อันดับสูงกว่า
+    });
     
     return withData.map((data, index) => ({
       ...data,
